@@ -514,40 +514,35 @@ function page_import(): void
             $erreur = 'Fichier trop gros (2 Mo maximum).';
         } else {
             try {
-                $lignes = analyser_csv((string) file_get_contents($fichier['tmp_name']), $types);
+                $lignes = analyser_lignes(lire_tableur($fichier['tmp_name'], (string) $fichier['name']), $types);
                 $_SESSION['import'] = $lignes;
             } catch (RuntimeException $e) {
                 $erreur = $e->getMessage();
             }
         }
     }
-    afficher('import', ['titre' => 'Import CSV', 'lignes' => $lignes, 'erreur' => $erreur, 'types' => $types]);
+    afficher('import', ['titre' => 'Importer des contrats', 'lignes' => $lignes, 'erreur' => $erreur, 'types' => $types]);
 }
 
 function normaliser_entete(string $texte): string
 {
     $texte = mb_strtolower(trim($texte, " \t\n\r\0\x0B\"\u{FEFF}"));
-    $texte = strtr($texte, ['é' => 'e', 'è' => 'e', 'ê' => 'e', 'à' => 'a', 'ç' => 'c', ' ' => '_', '-' => '_']);
-    return $texte;
+    $texte = strtr($texte, ['é' => 'e', 'è' => 'e', 'ê' => 'e', 'à' => 'a', 'ç' => 'c', 'ô' => 'o', 'û' => 'u']);
+    return trim((string) preg_replace('/[^a-z0-9]+/', '_', $texte), '_');
 }
 
 /** Lit le fichier et renvoie une ligne par contrat, avec ses erreurs éventuelles. */
-function analyser_csv(string $contenu, array $types): array
+function analyser_lignes(array $tableau, array $types): array
 {
-    if (!mb_check_encoding($contenu, 'UTF-8')) {
-        $contenu = mb_convert_encoding($contenu, 'UTF-8', 'Windows-1252'); // fichier enregistré par Excel
-    }
-    $contenu = preg_replace('/^\x{FEFF}/u', '', $contenu);
-    $premiereLigne = strtok($contenu, "\n");
-    $separateur = substr_count((string) $premiereLigne, ';') >= substr_count((string) $premiereLigne, ',') ? ';' : ',';
-
-    $flux = fopen('php://memory', 'r+');
-    fwrite($flux, $contenu);
-    rewind($flux);
-    $entetes = array_map('normaliser_entete', fgetcsv($flux, null, $separateur, '"', '') ?: []);
+    $entetes = array_map(fn ($v) => normaliser_entete((string) $v), $tableau[0] ?? []);
     $colonnes = ['client' => null, 'type' => null, 'produit' => null, 'date_fin' => null, 'statut' => null, 'montant' => null];
     $synonymes = ['date_de_fin' => 'date_fin', 'fin' => 'date_fin', 'echeance' => 'date_fin', 'date' => 'date_fin',
                   'nom' => 'client', 'nom_du_client' => 'client', 'type_de_contrat' => 'type', 'montant_ht' => 'montant'];
+    foreach ($entetes as $i => $entete) {
+        if (str_starts_with($entete, 'montant')) {
+            $entetes[$i] = 'montant'; // « Montant HT (€) »
+        }
+    }
     foreach ($entetes as $i => $entete) {
         $entete = $synonymes[$entete] ?? $entete;
         if (array_key_exists($entete, $colonnes)) {
@@ -575,7 +570,7 @@ function analyser_csv(string $contenu, array $types): array
     $lignes = [];
     $vues = [];
     $numero = 1;
-    while (($champs = fgetcsv($flux, null, $separateur, '"', '')) !== false) {
+    foreach (array_slice($tableau, 1) as $champs) {
         $numero++;
         if (count(array_filter($champs, fn ($v) => trim((string) $v) !== '')) === 0) {
             continue; // ligne vide
@@ -591,6 +586,10 @@ function analyser_csv(string $contenu, array $types): array
             'doublon' => false,
         ];
         $l['type_id'] = $typesParNom[mb_strtolower($l['type'])] ?? null;
+        // Excel stocke les dates comme un nombre de jours depuis le 30/12/1899
+        if (preg_match('/^\d{5}(\.0+)?$/', $l['date_fin_saisie'])) {
+            $l['date_fin_saisie'] = date('d/m/Y', strtotime('1899-12-30 +' . (int) $l['date_fin_saisie'] . ' days'));
+        }
         $l['date_fin'] = lire_date($l['date_fin_saisie']);
         $l['montant'] = lire_montant($val('montant'));
         $statut = normaliser_entete($val('statut'));
@@ -625,9 +624,17 @@ function analyser_csv(string $contenu, array $types): array
             throw new RuntimeException('Fichier trop long (2000 lignes maximum).');
         }
     }
-    fclose($flux);
     if (!$lignes) {
         throw new RuntimeException('Le fichier ne contient aucun contrat.');
     }
     return $lignes;
+}
+
+function page_modele(): void
+{
+    $binaire = modele_xlsx(array_column(types_contrat(), 'nom'));
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="modele-contrats.xlsx"');
+    header('Content-Length: ' . strlen($binaire));
+    echo $binaire;
 }

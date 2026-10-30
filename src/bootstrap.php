@@ -37,6 +37,7 @@ require __DIR__ . '/helpers.php';
 require __DIR__ . '/schema.php';
 require __DIR__ . '/contrats.php';
 require __DIR__ . '/rappels.php';
+require __DIR__ . '/tableur.php';
 
 function db(): PDO
 {

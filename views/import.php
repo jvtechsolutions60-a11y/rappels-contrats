@@ -1,22 +1,22 @@
-<h1>Import CSV</h1>
+<h1>Importer des contrats</h1>
 
 <?php if ($lignes === null): ?>
+<section class="carte">
+  <h2>1. Remplir le modèle</h2>
+  <p>Une ligne par contrat. Le type et le statut se choisissent dans une liste.</p>
+  <p><a class="bouton principal" href="<?= url('modele') ?>">Télécharger le modèle Excel</a></p>
+</section>
+
 <section class="carte formulaire">
-  <p>Chargez d'un coup vos contrats existants depuis un fichier CSV (Excel : « Enregistrer sous », format CSV point-virgule).</p>
-  <p>Colonnes attendues sur la première ligne : <code>client;type;produit;date_fin;statut;montant</code>. Les deux dernières sont facultatives.</p>
-  <ul class="note">
-    <li>Type : <?= e(implode(', ', array_column($types, 'nom'))) ?>.</li>
-    <li>Date de fin : JJ/MM/AAAA.</li>
-    <li>Statut : à envoyer (par défaut), envoyé, signé, non renouvelé.</li>
-  </ul>
+  <h2>2. Envoyer le fichier</h2>
   <?php if ($erreur): ?><p class="erreur"><?= e($erreur) ?></p><?php endif; ?>
   <form method="post" enctype="multipart/form-data">
     <?= champ_csrf() ?>
     <input type="hidden" name="action" value="analyser">
-    <label>Fichier <input type="file" name="fichier" accept=".csv,text/csv" required></label>
+    <label>Fichier Excel (.xlsx) ou CSV <input type="file" name="fichier" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required></label>
     <div class="boutons"><button class="principal">Vérifier le fichier</button></div>
   </form>
-  <p class="note">Rien n'est enregistré à cette étape : vous verrez d'abord un aperçu.</p>
+  <p class="note">Rien n'est enregistré à cette étape : vous verrez d'abord un aperçu, ligne par ligne.</p>
 </section>
 <?php else:
     $ok = count(array_filter($lignes, fn ($l) => !$l['erreurs'] && !$l['doublon']));

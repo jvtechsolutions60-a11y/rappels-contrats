@@ -37,9 +37,9 @@ Pour voir l'e-mail du jour sans l'envoyer : `php bin/rappels-du-matin.php --aper
 - « Signé » et « Non renouvelé » arrêtent les rappels. Changer la date de fin relance les jalons.
 - Pas d'e-mail le week-end ni les jours sans rien à signaler. Si l'envoi échoue, rien n'est noté comme envoyé et un bandeau rouge s'affiche dans l'application.
 
-## Import CSV
+## Import des contrats existants
 
-Menu « Import ». Première ligne : `client;type;produit;date_fin;statut;montant` (les deux dernières facultatives). Dates en JJ/MM/AAAA, fichier Excel « CSV point-virgule » accepté tel quel. Un aperçu montre les lignes en erreur et les contrats déjà présents avant d'enregistrer quoi que ce soit.
+Menu « Import » : bouton « Télécharger le modèle Excel » (listes déroulantes pour le type et le statut, feuille « Aide »), puis envoi du fichier rempli tel quel. Les fichiers CSV (point-virgule ou virgule) sont aussi acceptés. Un aperçu montre les lignes en erreur et les contrats déjà présents avant d'enregistrer quoi que ce soit. L'extension PHP `zip` est nécessaire pour les fichiers Excel (présente sur O2switch).
 
 ## Tester sur un poste
 

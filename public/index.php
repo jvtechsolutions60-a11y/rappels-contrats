@@ -32,6 +32,7 @@ $pages = [
     'deconnexion'    => 'page_deconnexion',
     'accueil'        => 'page_accueil',
     'import'         => 'page_import',
+    'modele'         => 'page_modele',
     'contrats'       => 'page_contrats',
     'contrat'        => 'page_contrat',
     'contrat_form'   => 'page_contrat_form',
