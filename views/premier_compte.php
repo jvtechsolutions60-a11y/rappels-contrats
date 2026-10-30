@@ -1,4 +1,4 @@
-<section class="carte etroite">
+<section class="carte etroite formulaire">
   <h1>Bienvenue</h1>
   <p>Créez le compte du gérant. C'est cette adresse qui recevra les rappels.</p>
   <?php if ($erreur): ?><p class="erreur"><?= e($erreur) ?></p><?php endif; ?>

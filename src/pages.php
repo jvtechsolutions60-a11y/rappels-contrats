@@ -37,7 +37,7 @@ function page_connexion(): void
         if ($u && password_verify((string) ($_POST['mot_de_passe'] ?? ''), $u['mot_de_passe'])) {
             session_regenerate_id(true);
             $_SESSION['utilisateur_id'] = (int) $u['id'];
-            rediriger('contrats');
+            rediriger('accueil');
         }
         sleep(1); // freine les essais de mots de passe en série
         $erreur = 'E-mail ou mot de passe incorrect.';
@@ -267,7 +267,7 @@ function page_contrat_action(): void
             flash('Contrat supprimé.');
             rediriger('contrats');
     }
-    $retour === 'contrats' ? rediriger('contrats') : rediriger('contrat', ['id' => $id]);
+    in_array($retour, ['contrats', 'accueil'], true) ? rediriger($retour) : rediriger('contrat', ['id' => $id]);
 }
 
 // ---------- Clients ----------
@@ -365,6 +365,9 @@ function page_reglages(): void
         try {
             envoyer_email(email_destinataire(), $sujet, $html, $texte);
             flash('E-mail de test envoyé à ' . email_destinataire() . '. Vérifiez aussi le dossier des indésirables.');
+            if (str_contains((string) reglage('dernier_envoi'), 'ÉCHEC')) {
+                ecrire_reglage('dernier_envoi', date('d/m/Y H:i') . ' – e-mail de test parti, l\'envoi refonctionne.');
+            }
         } catch (Throwable $e) {
             flash('L\'e-mail de test n\'est pas parti : ' . $e->getMessage());
         }
@@ -439,4 +442,192 @@ function page_type_form(): void
         }
     }
     afficher('type_form', ['titre' => $id ? 'Modifier le type de contrat' : 'Nouveau type de contrat', 'type' => $type, 'id' => $id, 'erreurs' => $erreurs]);
+}
+
+// ---------- Accueil « À faire » ----------
+
+function page_accueil(): void
+{
+    $contrats = db()->query(
+        "SELECT c.*, cl.nom AS client_nom, t.nom AS type_nom, t.jalons
+         FROM contrats c
+         JOIN clients cl ON cl.id = c.client_id
+         JOIN types_contrat t ON t.id = c.type_id
+         WHERE c.statut IN ('a_envoyer', 'envoye', 'expire')
+         ORDER BY c.date_fin, cl.nom"
+    )->fetchAll();
+
+    $blocs = ['en_retard' => [], 'a_envoyer' => [], 'en_attente' => [], 'a_venir' => []];
+    foreach ($contrats as $c) {
+        $c['jours'] = jours_restants($c['date_fin']);
+        $premierJalon = max(array_map('intval', explode(',', $c['jalons'])));
+        if ($c['statut'] === 'expire' || $c['jours'] < 0) {
+            $blocs['en_retard'][] = $c;
+        } elseif ($c['statut'] === 'envoye') {
+            $blocs['en_attente'][] = $c;
+        } elseif ($c['jours'] <= $premierJalon) {
+            $blocs['a_envoyer'][] = $c;
+        } elseif (count($blocs['a_venir']) < 10) {
+            $c['premier_rappel'] = date('Y-m-d', strtotime($c['date_fin'] . ' -' . $premierJalon . ' days'));
+            $blocs['a_venir'][] = $c;
+        }
+    }
+    afficher('accueil', ['titre' => 'À faire', 'blocs' => $blocs, 'aucunContrat' => !db()->query('SELECT COUNT(*) FROM contrats')->fetchColumn()]);
+}
+
+// ---------- Import CSV ----------
+
+function page_import(): void
+{
+    $types = types_contrat();
+    if (est_post() && ($_POST['action'] ?? '') === 'confirmer') {
+        $lignes = $_SESSION['import'] ?? [];
+        unset($_SESSION['import']);
+        $n = 0;
+        foreach ($lignes as $l) {
+            if ($l['erreurs'] || $l['doublon']) {
+                continue;
+            }
+            enregistrer_contrat([
+                'client_id' => trouver_ou_creer_client($l['client']),
+                'type_id'   => $l['type_id'],
+                'produit'   => $l['produit'],
+                'date_fin'  => $l['date_fin'],
+                'statut'    => $l['statut'],
+                'montant'   => $l['montant'],
+                'note'      => null,
+            ], 'Importé depuis un fichier CSV');
+            $n++;
+        }
+        maj_expires();
+        flash($n . ' contrat' . ($n > 1 ? 's importés' : ' importé') . '.');
+        rediriger('accueil');
+    }
+
+    $lignes = null;
+    $erreur = null;
+    if (est_post() && ($_POST['action'] ?? '') === 'analyser') {
+        $fichier = $_FILES['fichier'] ?? null;
+        if (!$fichier || $fichier['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($fichier['tmp_name'])) {
+            $erreur = 'Choisissez un fichier CSV.';
+        } elseif ($fichier['size'] > 2 * 1024 * 1024) {
+            $erreur = 'Fichier trop gros (2 Mo maximum).';
+        } else {
+            try {
+                $lignes = analyser_csv((string) file_get_contents($fichier['tmp_name']), $types);
+                $_SESSION['import'] = $lignes;
+            } catch (RuntimeException $e) {
+                $erreur = $e->getMessage();
+            }
+        }
+    }
+    afficher('import', ['titre' => 'Import CSV', 'lignes' => $lignes, 'erreur' => $erreur, 'types' => $types]);
+}
+
+function normaliser_entete(string $texte): string
+{
+    $texte = mb_strtolower(trim($texte, " \t\n\r\0\x0B\"\u{FEFF}"));
+    $texte = strtr($texte, ['é' => 'e', 'è' => 'e', 'ê' => 'e', 'à' => 'a', 'ç' => 'c', ' ' => '_', '-' => '_']);
+    return $texte;
+}
+
+/** Lit le fichier et renvoie une ligne par contrat, avec ses erreurs éventuelles. */
+function analyser_csv(string $contenu, array $types): array
+{
+    if (!mb_check_encoding($contenu, 'UTF-8')) {
+        $contenu = mb_convert_encoding($contenu, 'UTF-8', 'Windows-1252'); // fichier enregistré par Excel
+    }
+    $contenu = preg_replace('/^\x{FEFF}/u', '', $contenu);
+    $premiereLigne = strtok($contenu, "\n");
+    $separateur = substr_count((string) $premiereLigne, ';') >= substr_count((string) $premiereLigne, ',') ? ';' : ',';
+
+    $flux = fopen('php://memory', 'r+');
+    fwrite($flux, $contenu);
+    rewind($flux);
+    $entetes = array_map('normaliser_entete', fgetcsv($flux, null, $separateur, '"', '') ?: []);
+    $colonnes = ['client' => null, 'type' => null, 'produit' => null, 'date_fin' => null, 'statut' => null, 'montant' => null];
+    $synonymes = ['date_de_fin' => 'date_fin', 'fin' => 'date_fin', 'echeance' => 'date_fin', 'date' => 'date_fin',
+                  'nom' => 'client', 'nom_du_client' => 'client', 'type_de_contrat' => 'type', 'montant_ht' => 'montant'];
+    foreach ($entetes as $i => $entete) {
+        $entete = $synonymes[$entete] ?? $entete;
+        if (array_key_exists($entete, $colonnes)) {
+            $colonnes[$entete] = $i;
+        }
+    }
+    $manquantes = array_keys(array_filter(['client' => 1, 'type' => 1, 'produit' => 1, 'date_fin' => 1], fn ($k) => $colonnes[$k] === null, ARRAY_FILTER_USE_KEY));
+    if ($manquantes) {
+        throw new RuntimeException('Colonnes manquantes dans la première ligne : ' . implode(', ', $manquantes) . '. Utilisez le modèle fourni.');
+    }
+
+    $typesParNom = [];
+    foreach ($types as $t) {
+        $typesParNom[mb_strtolower($t['nom'])] = (int) $t['id'];
+    }
+    $statutsParNom = [];
+    foreach (STATUTS as $cle => $libelle) {
+        $statutsParNom[normaliser_entete($libelle)] = $cle;
+    }
+    $existe = db()->prepare(
+        'SELECT 1 FROM contrats c JOIN clients cl ON cl.id = c.client_id
+         WHERE LOWER(cl.nom) = LOWER(?) AND LOWER(c.produit) = LOWER(?) AND c.date_fin = ?'
+    );
+
+    $lignes = [];
+    $vues = [];
+    $numero = 1;
+    while (($champs = fgetcsv($flux, null, $separateur, '"', '')) !== false) {
+        $numero++;
+        if (count(array_filter($champs, fn ($v) => trim((string) $v) !== '')) === 0) {
+            continue; // ligne vide
+        }
+        $val = fn ($cle) => $colonnes[$cle] === null ? '' : trim((string) ($champs[$colonnes[$cle]] ?? ''));
+        $l = [
+            'numero'  => $numero,
+            'client'  => trim(preg_replace('/\s+/', ' ', $val('client'))),
+            'type'    => $val('type'),
+            'produit' => $val('produit'),
+            'date_fin_saisie' => $val('date_fin'),
+            'erreurs' => [],
+            'doublon' => false,
+        ];
+        $l['type_id'] = $typesParNom[mb_strtolower($l['type'])] ?? null;
+        $l['date_fin'] = lire_date($l['date_fin_saisie']);
+        $l['montant'] = lire_montant($val('montant'));
+        $statut = normaliser_entete($val('statut'));
+        $l['statut'] = $statut === '' ? 'a_envoyer' : ($statutsParNom[$statut] ?? null);
+
+        if ($l['client'] === '') {
+            $l['erreurs'][] = 'client manquant';
+        }
+        if (!$l['type_id']) {
+            $l['erreurs'][] = $l['type'] === '' ? 'type manquant' : 'type « ' . $l['type'] . ' » inconnu';
+        }
+        if ($l['produit'] === '') {
+            $l['erreurs'][] = 'produit manquant';
+        }
+        if (!$l['date_fin']) {
+            $l['erreurs'][] = 'date de fin invalide';
+        }
+        if ($l['statut'] === null) {
+            $l['erreurs'][] = 'statut « ' . $val('statut') . ' » inconnu';
+        }
+        if ($val('montant') !== '' && $l['montant'] === null) {
+            $l['erreurs'][] = 'montant invalide';
+        }
+        if (!$l['erreurs']) {
+            $cle = mb_strtolower($l['client'] . '|' . $l['produit'] . '|' . $l['date_fin']);
+            $existe->execute([$l['client'], $l['produit'], $l['date_fin']]);
+            $l['doublon'] = isset($vues[$cle]) || (bool) $existe->fetchColumn();
+            $vues[$cle] = true;
+        }
+        $lignes[] = $l;
+        if (count($lignes) > 2000) {
+            throw new RuntimeException('Fichier trop long (2000 lignes maximum).');
+        }
+    }
+    fclose($flux);
+    if (!$lignes) {
+        throw new RuntimeException('Le fichier ne contient aucun contrat.');
+    }
+    return $lignes;
 }

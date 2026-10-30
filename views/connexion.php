@@ -1,4 +1,4 @@
-<section class="carte etroite">
+<section class="carte etroite formulaire">
   <h1><?= e($config['nom_appli'] ?? 'Rappels de contrats') ?></h1>
   <?php if ($erreur): ?><p class="erreur"><?= e($erreur) ?></p><?php endif; ?>
   <form method="post">

@@ -4,7 +4,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/src/bootstrap.php';
 require dirname(__DIR__) . '/src/pages.php';
 
-$page = (string) ($_GET['p'] ?? 'contrats');
+$page = (string) ($_GET['p'] ?? 'accueil');
 
 // Premier lancement : création du compte
 $aucunCompte = !db()->query('SELECT COUNT(*) FROM utilisateurs')->fetchColumn();
@@ -30,6 +30,8 @@ maj_expires();
 
 $pages = [
     'deconnexion'    => 'page_deconnexion',
+    'accueil'        => 'page_accueil',
+    'import'         => 'page_import',
     'contrats'       => 'page_contrats',
     'contrat'        => 'page_contrat',
     'contrat_form'   => 'page_contrat_form',

@@ -10,7 +10,7 @@ Cahier des charges du MVP : https://claude.ai/artifact/GYrwmAfJ9BWXiGuQsLrKan
 | --- | --- | --- |
 | 1 | Connexion, contrats (saisie, fiche, liste, statuts, contrat suivant), clients, types de contrat | Fait |
 | 2 | Moteur de rappels et e-mail du matin | Fait |
-| 3 | Accueil « À faire » et import CSV | À faire |
+| 3 | Accueil « À faire » et import CSV | Fait |
 | 4 | Installation sur O2switch | À faire |
 | 5 | Test réel chez JVTECH puis chez 2 clients | À faire |
 
@@ -36,6 +36,10 @@ Pour voir l'e-mail du jour sans l'envoyer : `php bin/rappels-du-matin.php --aper
 - Un contrat dont la date de fin est dépassée sans signature passe « Expiré » et remonte tous les jours.
 - « Signé » et « Non renouvelé » arrêtent les rappels. Changer la date de fin relance les jalons.
 - Pas d'e-mail le week-end ni les jours sans rien à signaler. Si l'envoi échoue, rien n'est noté comme envoyé et un bandeau rouge s'affiche dans l'application.
+
+## Import CSV
+
+Menu « Import ». Première ligne : `client;type;produit;date_fin;statut;montant` (les deux dernières facultatives). Dates en JJ/MM/AAAA, fichier Excel « CSV point-virgule » accepté tel quel. Un aperçu montre les lignes en erreur et les contrats déjà présents avant d'enregistrer quoi que ce soit.
 
 ## Tester sur un poste
 

@@ -12,7 +12,17 @@ $config = require $fichierConfig;
 date_default_timezone_set($config['fuseau'] ?? 'Europe/Paris');
 
 if (PHP_SAPI !== 'cli') {
+    // Session gardée 30 jours, dans le dossier de l'application, pour ouvrir les liens
+    // de l'e-mail du matin sans se reconnecter à chaque fois
+    $dureeSession = 30 * 24 * 3600;
+    $dossierSessions = $racine . '/data/sessions';
+    if (!is_dir($dossierSessions)) {
+        mkdir($dossierSessions, 0700, true);
+    }
+    session_save_path($dossierSessions);
+    ini_set('session.gc_maxlifetime', (string) $dureeSession);
     session_set_cookie_params([
+        'lifetime' => $dureeSession,
         'httponly' => true,
         'samesite' => 'Lax',
         'secure'   => !empty($_SERVER['HTTPS']),
