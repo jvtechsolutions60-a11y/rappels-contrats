@@ -19,7 +19,7 @@ Cahier des charges du MVP : https://claude.ai/artifact/GYrwmAfJ9BWXiGuQsLrKan
 1. Dans cPanel, créer un sous-domaine (ex. `rappels.mondomaine.fr`) dont la racine est le dossier `public/` de l'application.
 2. Créer une base MySQL et un utilisateur, puis leur donner tous les droits.
 3. Créer une boîte e-mail d'envoi (ex. `rappels@mondomaine.fr`) et vérifier que SPF et DKIM sont actifs (cPanel, « Délivrabilité des e-mails »).
-4. Envoyer les fichiers, puis en SSH lancer `composer install --no-dev` dans le dossier de l'application.
+4. Envoyer les fichiers de l'archive prête à l'emploi (`rappels-contrats-vX.zip`, dépendances incluses) via le Gestionnaire de fichiers de cPanel, puis l'extraire. Depuis le dépôt GitHub, il faut en plus lancer `composer install --no-dev` en SSH.
 5. Copier `config.example.php` en `config.php` et y mettre l'adresse de l'application, les accès à la base et ceux de la boîte d'envoi.
 6. Activer le certificat HTTPS (Let's Encrypt) sur le sous-domaine.
 7. Ouvrir l'adresse : la première visite crée les tables et demande le compte du gérant.
