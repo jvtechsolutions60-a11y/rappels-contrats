@@ -40,6 +40,7 @@ Pour voir l'e-mail du jour sans l'envoyer : `php bin/rappels-du-matin.php --aper
 ## Tester sur un poste
 
 ```
+composer install
 cp config.example.php config.php   # puis choisir la ligne SQLite
 php -S 127.0.0.1:8000 -t public
 ```
