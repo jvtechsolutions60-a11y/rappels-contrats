@@ -1,0 +1,84 @@
+:root {
+  --fond: #f5f6f8;
+  --carte: #ffffff;
+  --texte: #1f2328;
+  --discret: #626a73;
+  --bord: #d8dce1;
+  --principal: #1f5fbf;
+  --succes: #1a7f45;
+  --danger: #b42318;
+  --retard: #b42318;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--fond); color: var(--texte); }
+a { color: var(--principal); }
+main { max-width: 1000px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 1.5rem; margin: .5rem 0 1rem; }
+h2 { font-size: 1.15rem; margin: 1.5rem 0 .75rem; }
+.carte h2:first-child { margin-top: 0; }
+
+.entete { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--carte); border-bottom: 1px solid var(--bord); }
+.entete .marque { font-weight: 700; text-decoration: none; color: var(--texte); }
+.entete nav { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.entete nav a:not(.bouton) { text-decoration: none; }
+footer { max-width: 1000px; margin: 0 auto; padding: 24px 16px; font-size: .9rem; }
+
+.carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.etroite { max-width: 420px; margin: 40px auto; }
+
+button, .bouton { display: inline-block; font: inherit; padding: 7px 14px; border-radius: 6px; border: 1px solid var(--bord); background: var(--carte); color: var(--texte); cursor: pointer; text-decoration: none; }
+button:hover, .bouton:hover { border-color: var(--discret); }
+.principal { background: var(--principal); border-color: var(--principal); color: #fff; }
+.succes { background: var(--succes); border-color: var(--succes); color: #fff; }
+.danger { color: var(--danger); border-color: var(--danger); }
+form.enligne { display: inline; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.formulaire label { display: block; margin-bottom: 14px; font-weight: 600; }
+.formulaire small { display: block; font-weight: 400; color: var(--discret); }
+input, select, textarea { display: block; width: 100%; margin-top: 4px; font: inherit; padding: 8px 10px; border: 1px solid var(--bord); border-radius: 6px; background: #fff; color: var(--texte); }
+.filtres { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.filtres input, .filtres select { width: auto; flex: 1 1 160px; margin: 0; }
+details { margin-bottom: 14px; }
+summary { cursor: pointer; color: var(--principal); margin-bottom: 10px; }
+.boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+.erreur { display: block; color: var(--danger); font-weight: 400; }
+.flash { background: #e8f3ec; border: 1px solid #b7dcc4; border-radius: 6px; padding: 8px 12px; }
+.vide, .note { color: var(--discret); }
+
+table.liste { width: 100%; border-collapse: collapse; background: var(--carte); border: 1px solid var(--bord); border-radius: 8px; }
+.liste th, .liste td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--bord); vertical-align: top; }
+.liste th { font-size: .85rem; color: var(--discret); font-weight: 600; }
+.liste tr.clos td { color: var(--discret); }
+.retard { color: var(--retard); font-weight: 600; }
+
+.statut { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: .85rem; white-space: nowrap; background: #eef0f3; }
+.statut-a_envoyer { background: #fff1d6; color: #7a4b00; }
+.statut-envoye { background: #e3edfb; color: #1f4f99; }
+.statut-signe { background: #e3f4e9; color: #155c33; }
+.statut-expire { background: #fde4e1; color: #8f1d13; }
+.statut-non_renouvele { background: #eef0f3; color: #4a5159; }
+.statut-gros { display: flex; gap: 12px; align-items: center; font-size: 1.05rem; }
+
+.proposition { background: #f0f5fd; border: 1px solid #c8d9f3; border-radius: 6px; padding: 12px; margin: 12px 0; }
+.proposition p { margin-top: 0; }
+dl.infos { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 16px 0; }
+dl.infos dt { color: var(--discret); }
+dl.infos dd { margin: 0; }
+.liens { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 0; }
+.fil { margin: 0; }
+.historique { list-style: none; padding: 0; }
+.historique li { padding: 4px 0; border-bottom: 1px solid var(--bord); }
+.historique time { color: var(--discret); margin-right: 8px; }
+.zone-danger { margin-top: 32px; }
+
+/* Téléphone : les tableaux deviennent des fiches */
+@media (max-width: 640px) {
+  .liste thead { display: none; }
+  .liste, .liste tbody, .liste tr, .liste td { display: block; width: 100%; }
+  .liste tr { border-bottom: 1px solid var(--bord); padding: 8px 0; }
+  .liste td { border: 0; padding: 2px 10px; }
+  .liste td[data-label]::before { content: attr(data-label) " : "; color: var(--discret); }
+  dl.infos { grid-template-columns: 1fr; gap: 0; }
+  dl.infos dd { margin-bottom: 8px; }
+}
