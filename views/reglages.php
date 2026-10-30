@@ -1,5 +1,24 @@
 <h1>Réglages</h1>
 
+<section class="carte formulaire">
+  <h2>E-mail du matin</h2>
+  <p>Envoyé vers 7 h du lundi au vendredi, seulement s'il y a quelque chose à faire.</p>
+  <?php if ($erreurEmail): ?><p class="erreur"><?= e($erreurEmail) ?></p><?php endif; ?>
+  <form method="post">
+    <?= champ_csrf() ?>
+    <input type="hidden" name="action" value="email">
+    <label>Adresse qui reçoit les rappels <input type="email" name="email_rappels" required value="<?= e($emailRappels) ?>"></label>
+    <div class="boutons"><button>Enregistrer l'adresse</button></div>
+  </form>
+  <form method="post" style="margin-top:12px">
+    <?= champ_csrf() ?>
+    <input type="hidden" name="action" value="test">
+    <button>Envoyer un e-mail de test</button>
+    <small>Il contient ce que l'e-mail du matin dirait aujourd'hui, sans rien noter comme envoyé.</small>
+  </form>
+  <p class="note">Dernier envoi automatique : <?= e($dernierEnvoi ?? 'aucun pour l\'instant') ?></p>
+</section>
+
 <section class="carte">
   <h2>Types de contrat et rythme des rappels</h2>
   <p>Chaque type a ses propres jalons : un rappel part quand la date de fin est à ce nombre de jours.</p>
@@ -31,5 +50,3 @@
     <div class="boutons"><button>Changer le mot de passe</button></div>
   </form>
 </section>
-
-<p class="note">L'adresse qui reçoit l'e-mail du matin et le bouton « e-mail de test » arrivent à l'étape 2.</p>

@@ -347,7 +347,30 @@ function page_client_form(): void
 function page_reglages(): void
 {
     $erreur = null;
-    if (est_post() && ($_POST['action'] ?? '') === 'mot_de_passe') {
+    $erreurEmail = null;
+    $action = est_post() ? (string) ($_POST['action'] ?? '') : '';
+    if ($action === 'email') {
+        $email = trim((string) ($_POST['email_rappels'] ?? ''));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $erreurEmail = 'Adresse e-mail invalide.';
+        } else {
+            ecrire_reglage('email_rappels', $email);
+            flash('Adresse des rappels enregistrée.');
+            rediriger('reglages');
+        }
+    }
+    if ($action === 'test') {
+        maj_expires();
+        [$sujet, $html, $texte] = construire_email(calculer_rappels(), true);
+        try {
+            envoyer_email(email_destinataire(), $sujet, $html, $texte);
+            flash('E-mail de test envoyé à ' . email_destinataire() . '. Vérifiez aussi le dossier des indésirables.');
+        } catch (Throwable $e) {
+            flash('L\'e-mail de test n\'est pas parti : ' . $e->getMessage());
+        }
+        rediriger('reglages');
+    }
+    if ($action === 'mot_de_passe') {
         $st = db()->prepare('SELECT * FROM utilisateurs WHERE id = ?');
         $st->execute([$_SESSION['utilisateur_id']]);
         $u = $st->fetch();
@@ -366,7 +389,14 @@ function page_reglages(): void
     $types = db()->query(
         'SELECT t.*, (SELECT COUNT(*) FROM contrats c WHERE c.type_id = t.id) AS nb FROM types_contrat t ORDER BY position, nom'
     )->fetchAll();
-    afficher('reglages', ['titre' => 'Réglages', 'types' => $types, 'erreur' => $erreur]);
+    afficher('reglages', [
+        'titre'        => 'Réglages',
+        'types'        => $types,
+        'erreur'       => $erreur,
+        'erreurEmail'  => $erreurEmail,
+        'emailRappels' => email_destinataire(),
+        'dernierEnvoi' => reglage('dernier_envoi'),
+    ]);
 }
 
 function page_type_form(): void

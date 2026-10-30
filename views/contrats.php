@@ -1,4 +1,7 @@
 <h1>Contrats</h1>
+<?php $dernierEnvoi = reglage('dernier_envoi'); if ($dernierEnvoi && str_contains($dernierEnvoi, 'ÉCHEC')): ?>
+  <p class="alerte">Le dernier e-mail du matin n'est pas parti (<?= e($dernierEnvoi) ?>). Vérifiez la boîte d'envoi, puis utilisez « Envoyer un e-mail de test » dans les <a href="<?= url('reglages') ?>">réglages</a>.</p>
+<?php endif; ?>
 
 <form method="get" class="filtres">
   <input type="hidden" name="p" value="contrats">

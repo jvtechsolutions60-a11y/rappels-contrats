@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-// Crée les tables au premier lancement, puis ne fait plus rien.
+const VERSION_SCHEMA = 2;
+
+// Crée les tables au premier lancement (ou ajoute les nouvelles après une mise à jour), puis ne fait plus rien.
 function creer_tables(PDO $pdo): void
 {
     $sqlite = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite';
@@ -61,18 +63,35 @@ function creer_tables(PDO $pdo): void
             cle VARCHAR(100) PRIMARY KEY,
             valeur TEXT NULL
         )$suffixe",
+        // Un rappel par contrat, par jalon et par date de fin : si la date de fin change, les rappels repartent
+        'rappels_envoyes' => "CREATE TABLE IF NOT EXISTS rappels_envoyes (
+            id $id,
+            contrat_id INT NOT NULL,
+            jalon INT NOT NULL,
+            date_fin DATE NOT NULL,
+            envoye_le DATETIME NOT NULL,
+            UNIQUE (contrat_id, jalon, date_fin),
+            FOREIGN KEY (contrat_id) REFERENCES contrats(id) ON DELETE CASCADE
+        )$suffixe",
     ];
 
-    // Une seule vérification par requête : si la dernière table existe, tout est en place.
+    // Une seule vérification par requête : le numéro de version du schéma
     try {
-        $pdo->query('SELECT 1 FROM reglages LIMIT 1');
-        return;
+        $version = (int) $pdo->query("SELECT valeur FROM reglages WHERE cle = 'version_schema'")->fetchColumn();
     } catch (PDOException $e) {
-        // tables absentes : on les crée
+        $version = 0; // tables absentes
+    }
+    if ($version >= VERSION_SCHEMA) {
+        return;
     }
 
     foreach ($tables as $sql) {
         $pdo->exec($sql);
+    }
+    $pdo->prepare('DELETE FROM reglages WHERE cle = ?')->execute(['version_schema']);
+    $pdo->prepare('INSERT INTO reglages (cle, valeur) VALUES (?, ?)')->execute(['version_schema', (string) VERSION_SCHEMA]);
+    if ($pdo->query('SELECT COUNT(*) FROM types_contrat')->fetchColumn()) {
+        return; // mise à jour d'une installation existante : les types sont déjà là
     }
 
     // Types de contrat proposés par défaut (validés le 30/10/2026)

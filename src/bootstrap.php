@@ -11,16 +11,22 @@ $config = require $fichierConfig;
 
 date_default_timezone_set($config['fuseau'] ?? 'Europe/Paris');
 
-session_set_cookie_params([
-    'httponly' => true,
-    'samesite' => 'Lax',
-    'secure'   => !empty($_SERVER['HTTPS']),
-]);
-session_start();
+if (PHP_SAPI !== 'cli') {
+    session_set_cookie_params([
+        'httponly' => true,
+        'samesite' => 'Lax',
+        'secure'   => !empty($_SERVER['HTTPS']),
+    ]);
+    session_start();
+}
 
+if (is_file($racine . '/vendor/autoload.php')) {
+    require $racine . '/vendor/autoload.php';
+}
 require __DIR__ . '/helpers.php';
 require __DIR__ . '/schema.php';
 require __DIR__ . '/contrats.php';
+require __DIR__ . '/rappels.php';
 
 function db(): PDO
 {

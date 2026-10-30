@@ -82,3 +82,4 @@ dl.infos dd { margin: 0; }
   dl.infos { grid-template-columns: 1fr; gap: 0; }
   dl.infos dd { margin-bottom: 8px; }
 }
+.alerte { background: #fde4e1; border: 1px solid #f3b8b0; border-radius: 6px; padding: 8px 12px; }
