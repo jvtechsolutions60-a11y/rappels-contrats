@@ -28,17 +28,17 @@
 <?php else: ?>
 <table class="liste">
   <thead>
-    <tr><th>Client</th><th>Produit</th><th>Type</th><th>Fin</th><th>Statut</th><th></th></tr>
+    <tr><th>Échéance</th><th>Client</th><th>Produit</th><th>Type</th><th>Statut</th><th></th></tr>
   </thead>
   <tbody>
   <?php foreach ($contrats as $c):
       $jours = jours_restants($c['date_fin']);
       $ouvert = in_array($c['statut'], STATUTS_OUVERTS, true); ?>
     <tr class="<?= $ouvert ? '' : 'clos' ?>">
+      <td class="col-compteur"><?php require __DIR__ . '/_compteur.php'; ?></td>
       <td data-label="Client"><a href="<?= url('contrat', ['id' => $c['id']]) ?>"><?= e($c['client_nom']) ?></a></td>
       <td data-label="Produit"><?= e($c['produit']) ?></td>
       <td data-label="Type"><?= e($c['type_nom']) ?></td>
-      <td data-label="Fin"><?= date_fr($c['date_fin']) ?><?php if ($ouvert): ?><br><small class="<?= $jours < 0 ? 'retard' : '' ?>"><?= e(texte_jours($jours)) ?></small><?php endif; ?></td>
       <td data-label="Statut"><span class="statut statut-<?= e($c['statut']) ?>"><?= e(libelle_statut($c['statut'])) ?></span></td>
       <td><div class="actions"><?php $retour = 'contrats'; require __DIR__ . '/_actions.php'; ?></div></td>
     </tr>

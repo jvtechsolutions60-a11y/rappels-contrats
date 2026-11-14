@@ -154,8 +154,13 @@ function page_contrat_form(): void
         if ($valeurs['produit'] === '') {
             $erreurs['produit'] = 'Indiquez le produit.';
         }
+        $demanderConfirmation = false;
         if (!$dateFin) {
-            $erreurs['date_fin'] = 'Date de fin invalide (format JJ/MM/AAAA).';
+            $erreurs['date_fin'] = 'Date non reconnue. Tapez par exemple 13/06/27 ou 13/06/2027.';
+        } elseif (date_suspecte($dateFin) && $dateFin !== ($existant['date_fin'] ?? null) && empty($_POST['confirmer_date'])) {
+            $erreurs['date_fin'] = 'Le ' . date_fr($dateFin) . ($dateFin < aujourdhui() ? ' est déjà passé' : ' est dans plus de 5 ans')
+                . '. Vérifiez la date, ou cochez la case pour la garder.';
+            $demanderConfirmation = true;
         }
         if ($valeurs['montant'] !== '' && $montant === null) {
             $erreurs['montant'] = 'Montant invalide.';
@@ -196,6 +201,7 @@ function page_contrat_form(): void
         'existant' => $existant,
         'valeurs'  => $valeurs,
         'erreurs'  => $erreurs,
+        'demanderConfirmation' => $demanderConfirmation ?? false,
         'types'    => $types,
         'clients'  => $clients,
     ]);
@@ -281,6 +287,18 @@ function page_clients(): void
          GROUP BY cl.id, cl.nom, cl.contact, cl.email, cl.telephone, cl.note, cl.cree_le
          ORDER BY cl.nom"
     )->fetchAll();
+    // Contrat en cours le plus proche de sa fin, pour chaque client
+    $prochains = [];
+    foreach (db()->query("SELECT * FROM contrats WHERE statut IN ('a_envoyer', 'envoye', 'expire') ORDER BY date_fin")->fetchAll() as $c) {
+        $prochains[$c['client_id']] ??= $c;
+    }
+    foreach ($clients as &$cl) {
+        $cl['prochain'] = $prochains[$cl['id']] ?? null;
+    }
+    unset($cl);
+    // Les plus urgents d'abord, puis les clients sans contrat en cours par ordre alphabétique
+    usort($clients, fn ($a, $b) => [$a['prochain'] ? 0 : 1, $a['prochain']['date_fin'] ?? '', mb_strtolower($a['nom'])]
+        <=> [$b['prochain'] ? 0 : 1, $b['prochain']['date_fin'] ?? '', mb_strtolower($b['nom'])]);
     afficher('clients', ['titre' => 'Clients', 'clients' => $clients]);
 }
 
@@ -294,7 +312,10 @@ function page_client(): void
     }
     $st = db()->prepare(
         'SELECT c.*, t.nom AS type_nom FROM contrats c JOIN types_contrat t ON t.id = c.type_id
-         WHERE c.client_id = ? ORDER BY c.date_fin DESC'
+         WHERE c.client_id = ?
+         ORDER BY CASE WHEN c.statut IN (\'a_envoyer\', \'envoye\', \'expire\') THEN 0 ELSE 1 END,
+                  CASE WHEN c.statut IN (\'a_envoyer\', \'envoye\', \'expire\') THEN c.date_fin END,
+                  c.date_fin DESC'
     );
     $st->execute([$client['id']]);
     afficher('client', ['titre' => $client['nom'], 'client' => $client, 'contrats' => $st->fetchAll()]);

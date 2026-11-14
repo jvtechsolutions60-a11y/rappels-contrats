@@ -97,3 +97,39 @@ dl.infos dd { margin: 0; }
 .taches li:last-child { border-bottom: 0; }
 .taches a { text-decoration: none; color: var(--texte); }
 .taches a strong { color: var(--principal); }
+
+/* Compteur de jours avant la fin */
+.compteur { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 84px; padding: 6px 8px; border-radius: 8px; line-height: 1.15; text-align: center; border: 1px solid transparent; }
+.compteur-jours { font-size: 1.35rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.compteur-date { font-size: .75rem; opacity: .85; white-space: nowrap; }
+.compteur-urgent { background: #fde4e1; color: #8f1d13; border-color: #f3b8b0; }
+.compteur-bientot { background: #fff1d6; color: #7a4b00; border-color: #f2d49a; }
+.compteur-loin { background: #e3f4e9; color: #155c33; border-color: #b7dcc4; }
+.compteur-clos { background: #eef0f3; color: #4a5159; }
+.compteur-clos .compteur-jours { font-size: .95rem; font-weight: 600; }
+.compteur-gros { min-width: 120px; padding: 10px 14px; }
+.compteur-gros .compteur-jours { font-size: 2rem; }
+.compteur-gros .compteur-date { font-size: .85rem; }
+.statut-gros { display: flex; gap: 16px; align-items: center; margin-bottom: 12px; }
+.liste td.col-compteur { width: 1%; vertical-align: middle; }
+.liste td { vertical-align: middle; }
+.taches li { justify-content: flex-start; }
+.tache-texte { flex: 1 1 200px; }
+.taches small { color: var(--discret); }
+
+/* Saisie de la date de fin */
+.champ-date { margin-bottom: 14px; }
+.champ-date > label { display: block; font-weight: 600; }
+.date-ligne { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+.date-ligne input { width: 160px; margin: 0; font-size: 1.1rem; }
+.raccourcis { display: flex; gap: 6px; }
+.date-apercu { display: block; margin-top: 4px; font-weight: 600; color: var(--discret); }
+.date-apercu.urgent { color: #8f1d13; }
+.date-apercu.bientot { color: #7a4b00; }
+.date-apercu.loin { color: #155c33; }
+.formulaire label.case { display: flex; gap: 8px; align-items: center; font-weight: 400; margin-top: 6px; }
+.formulaire label.case input { width: auto; margin: 0; }
+
+@media (max-width: 640px) {
+  .liste td.col-compteur { width: auto; padding-top: 8px; }
+}

@@ -3,8 +3,11 @@
 <h1><?= e($c['client_nom']) ?> – <?= e($c['produit']) ?></h1>
 
 <section class="carte">
-  <p class="statut-gros"><span class="statut statut-<?= e($c['statut']) ?>"><?= e(libelle_statut($c['statut'])) ?></span>
-    <?php if ($ouvert): ?><span class="<?= $jours < 0 ? 'retard' : '' ?>">Fin <?= e(texte_jours($jours)) ?></span><?php endif; ?></p>
+  <div class="statut-gros">
+    <?php $compteurGros = true; require __DIR__ . '/_compteur.php'; $compteurGros = false; ?>
+    <div><span class="statut statut-<?= e($c['statut']) ?>"><?= e(libelle_statut($c['statut'])) ?></span>
+      <?php if ($ouvert): ?><br><span class="<?= $jours < 0 ? 'retard' : '' ?>">Fin <?= e(texte_jours($jours)) ?></span><?php endif; ?></div>
+  </div>
   <div class="actions"><?php $retour = 'contrat'; require __DIR__ . '/_actions.php'; ?></div>
 
   <?php if ($c['statut'] === 'signe' && !$c['contrat_suivant_id']): ?>

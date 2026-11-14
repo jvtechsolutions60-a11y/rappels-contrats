@@ -11,12 +11,12 @@ Cahier des charges du MVP : https://claude.ai/artifact/GYrwmAfJ9BWXiGuQsLrKan
 | 1 | Connexion, contrats (saisie, fiche, liste, statuts, contrat suivant), clients, types de contrat | Fait |
 | 2 | Moteur de rappels et e-mail du matin | Fait |
 | 3 | Accueil « À faire » et import CSV | Fait |
-| 4 | Installation sur O2switch | À faire |
+| 4 | Installation sur O2switch | Fait (14/11/2026) |
 | 5 | Test réel chez JVTECH puis chez 2 clients | À faire |
 
 ## Installation sur O2switch
 
-1. Dans cPanel, créer un sous-domaine (ex. `rappels.mondomaine.fr`) dont la racine est le dossier `public/` de l'application.
+1. Dans cPanel, créer un sous-domaine (ex. `rappels.mondomaine.fr`). Mettre l'application **dans le dossier que cPanel crée pour ce sous-domaine** (ex. `~/rappels.mondomaine.fr/app`), puis faire pointer la racine du sous-domaine sur `app/public`. Sur O2switch, un dossier créé à la main directement dans le dossier personnel n'est pas lisible par le serveur web (erreur 403).
 2. Créer une base MySQL et un utilisateur, puis leur donner tous les droits.
 3. Créer une boîte e-mail d'envoi (ex. `rappels@mondomaine.fr`) et vérifier que SPF et DKIM sont actifs (cPanel, « Délivrabilité des e-mails »).
 4. Envoyer les fichiers de l'archive prête à l'emploi (`rappels-contrats-vX.zip`, dépendances incluses) via le Gestionnaire de fichiers de cPanel, puis l'extraire. Depuis le dépôt GitHub, il faut en plus lancer `composer install --no-dev` en SSH.
@@ -28,6 +28,8 @@ Cahier des charges du MVP : https://claude.ai/artifact/GYrwmAfJ9BWXiGuQsLrKan
    `php /home/COMPTE/CHEMIN/bin/rappels-du-matin.php`
 
 Pour voir l'e-mail du jour sans l'envoyer : `php bin/rappels-du-matin.php --apercu`.
+
+Mise à jour : cPanel, « Git Version Control », « Gérer » puis « Mettre à jour depuis le distant » (si l'application a été installée par clonage du dépôt), puis `composer install --no-dev` dans le Terminal si `composer.lock` a changé.
 
 ## Comment les rappels fonctionnent
 

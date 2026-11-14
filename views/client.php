@@ -19,13 +19,13 @@
   <p class="vide">Aucun contrat pour ce client.</p>
 <?php else: ?>
 <table class="liste">
-  <thead><tr><th>Produit</th><th>Type</th><th>Fin</th><th>Statut</th></tr></thead>
+  <thead><tr><th>Échéance</th><th>Produit</th><th>Type</th><th>Statut</th></tr></thead>
   <tbody>
   <?php foreach ($contrats as $c): ?>
     <tr class="<?= in_array($c['statut'], STATUTS_OUVERTS, true) ? '' : 'clos' ?>">
+      <td class="col-compteur"><?php require __DIR__ . '/_compteur.php'; ?></td>
       <td data-label="Produit"><a href="<?= url('contrat', ['id' => $c['id']]) ?>"><?= e($c['produit']) ?></a></td>
       <td data-label="Type"><?= e($c['type_nom']) ?></td>
-      <td data-label="Fin"><?= date_fr($c['date_fin']) ?></td>
       <td data-label="Statut"><span class="statut statut-<?= e($c['statut']) ?>"><?= e(libelle_statut($c['statut'])) ?></span></td>
     </tr>
   <?php endforeach; ?>

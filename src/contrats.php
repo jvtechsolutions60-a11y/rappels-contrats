@@ -57,13 +57,19 @@ function changer_statut(int $id, string $nouveau): void
     journaliser($id, 'statut', libelle_statut($contrat['statut']) . ' → ' . libelle_statut($nouveau));
 }
 
-// Passe en « Expiré » les contrats dont la date de fin est dépassée sans signature
+// Passe en « Expiré » les contrats dont la date de fin est dépassée sans signature,
+// et remet dans le circuit un contrat « Expiré » dont la date de fin a été repoussée
 function maj_expires(): void
 {
     $st = db()->prepare("SELECT id FROM contrats WHERE statut IN ('a_envoyer', 'envoye') AND date_fin < ?");
     $st->execute([aujourdhui()]);
     foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $id) {
         changer_statut((int) $id, 'expire');
+    }
+    $st = db()->prepare("SELECT id, date_envoi_devis FROM contrats WHERE statut = 'expire' AND date_fin >= ?");
+    $st->execute([aujourdhui()]);
+    foreach ($st->fetchAll() as $c) {
+        changer_statut((int) $c['id'], $c['date_envoi_devis'] ? 'envoye' : 'a_envoyer');
     }
 }
 

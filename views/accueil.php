@@ -32,9 +32,10 @@ $rienAFaire = !$blocs['en_retard'] && !$blocs['a_envoyer'] && !$blocs['en_attent
     <ul class="taches">
     <?php foreach ($blocs[$cle] as $c): ?>
       <li>
-        <div>
+        <?php require __DIR__ . '/_compteur.php'; ?>
+        <div class="tache-texte">
           <a href="<?= url('contrat', ['id' => $c['id']]) ?>"><strong><?= e($c['client_nom']) ?></strong> – <?= e($c['produit']) ?></a>
-          <br><small class="<?= $c['jours'] < 0 ? 'retard' : '' ?>">Fin le <?= date_fr($c['date_fin']) ?>, <?= e(texte_jours($c['jours'])) ?>
+          <br><small><?= e($c['type_nom']) ?>
           <?php if ($cle === 'en_attente' && $c['date_envoi_devis']): ?> · devis envoyé le <?= date_fr($c['date_envoi_devis']) ?><?php endif; ?>
           <?php if ($cle === 'a_venir'): ?> · premier rappel le <?= date_fr($c['premier_rappel']) ?><?php endif; ?></small>
         </div>

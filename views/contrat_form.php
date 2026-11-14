@@ -1,7 +1,7 @@
 <?php
 $date = $valeurs['date_fin'];
-// Le champ date du navigateur attend AAAA-MM-JJ
-$dateChamp = lire_date((string) $date) ?? $date;
+$dateLue = lire_date((string) $date);
+$dateChamp = $dateLue ? date_fr($dateLue) : $date;
 $montant = $valeurs['montant'] === null ? '' : str_replace('.', ',', (string) $valeurs['montant']);
 ?>
 <p class="fil"><a href="<?= $existant ? url('contrat', ['id' => $existant['id']]) : url('contrats') ?>">← Retour</a></p>
@@ -31,10 +31,22 @@ $montant = $valeurs['montant'] === null ? '' : str_replace('.', ',', (string) $v
     <?php if (isset($erreurs['produit'])): ?><span class="erreur"><?= e($erreurs['produit']) ?></span><?php endif; ?>
   </label>
 
-  <label>Date de fin
-    <input type="date" name="date_fin" required value="<?= e($dateChamp) ?>">
+  <div class="champ-date">
+    <label for="date_fin">Date de fin</label>
+    <div class="date-ligne">
+      <input type="text" id="date_fin" name="date_fin" required inputmode="numeric" autocomplete="off" placeholder="JJ/MM/AA" value="<?= e($dateChamp) ?>">
+      <span class="raccourcis">
+        <button type="button" data-ans="1">+1 an</button>
+        <button type="button" data-ans="2">+2 ans</button>
+        <button type="button" data-ans="3">+3 ans</button>
+      </span>
+    </div>
+    <small id="date-apercu" class="date-apercu" aria-live="polite"></small>
     <?php if (isset($erreurs['date_fin'])): ?><span class="erreur"><?= e($erreurs['date_fin']) ?></span><?php endif; ?>
-  </label>
+    <?php if (!empty($demanderConfirmation)): ?>
+      <label class="case"><input type="checkbox" name="confirmer_date" value="1"> Oui, cette date est correcte</label>
+    <?php endif; ?>
+  </div>
 
   <details <?= isset($erreurs['montant']) || isset($erreurs['statut']) || ($existant && ($valeurs['note'] || $montant !== '')) ? 'open' : '' ?>>
     <summary>Plus de détails</summary>

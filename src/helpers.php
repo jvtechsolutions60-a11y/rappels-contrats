@@ -54,6 +54,26 @@ function texte_jours(int $jours): string
     return 'dans ' . $jours . ' j';
 }
 
+// Niveau d'urgence pour la couleur du compteur : urgent (dépassé ou < 15 j), bientot (< 60 j), loin, clos
+function niveau_urgence(int $jours, string $statut): string
+{
+    if (!in_array($statut, STATUTS_OUVERTS, true)) {
+        return 'clos';
+    }
+    if ($jours < 15) {
+        return 'urgent';
+    }
+    return $jours < 60 ? 'bientot' : 'loin';
+}
+
+function texte_compteur(int $jours): string
+{
+    if ($jours === 0) {
+        return 'Auj.';
+    }
+    return $jours < 0 ? 'J+' . abs($jours) : 'J-' . $jours;
+}
+
 // Messages affichés une fois après une action
 function flash(string $message): void
 {
@@ -106,13 +126,28 @@ function afficher(string $vue, array $donnees = []): void
 function lire_date(string $saisie): ?string
 {
     $saisie = trim($saisie);
-    foreach (['Y-m-d', 'd/m/Y', 'd/m/y', 'd-m-Y', 'd.m.Y'] as $format) {
+    // « 130627 » ou « 13062027 » : chiffres seuls
+    if (preg_match('/^(\d{2})(\d{2})(\d{2}|\d{4})$/', $saisie, $m)) {
+        $saisie = "$m[1]/$m[2]/$m[3]";
+    }
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $saisie)) {
+        $saisie = preg_replace('/[\s.\-]+/', '/', $saisie);
+    }
+    // Année sur deux chiffres : toujours 20xx (une fin de contrat n'est jamais au siècle dernier)
+    $saisie = preg_replace('#^(\d{1,2}/\d{1,2}/)(\d{2})$#', '${1}20$2', $saisie);
+    foreach (['Y-m-d', 'd/m/Y', 'j/n/Y'] as $format) {
         $d = DateTime::createFromFormat('!' . $format, $saisie);
         if ($d && $d->format($format) === $saisie) {
             return $d->format('Y-m-d');
         }
     }
     return null;
+}
+
+// Une date de fin passée ou à plus de 5 ans est sans doute une faute de frappe
+function date_suspecte(string $date): bool
+{
+    return $date < aujourdhui() || $date > date('Y-m-d', strtotime('+5 years'));
 }
 
 // Convertit un montant saisi (« 1 234,50 ») en nombre, ou null
