@@ -165,3 +165,40 @@ function montant_fr(?string $montant): string
 {
     return $montant === null || $montant === '' ? '' : number_format((float) $montant, 2, ',', ' ') . ' €';
 }
+
+// Couleurs des graphiques (donuts, légendes)
+const PALETTE = ['#36b99a', '#e8604c', '#8e6fd8', '#f0904a', '#e8b83e', '#2e8bc9', '#b5c43c', '#5a9e6f'];
+
+// Donut SVG : $parts = [['valeur' => float, 'couleur' => '#hex'], ...]
+function donut_svg(array $parts, string $centre = ''): string
+{
+    $total = array_sum(array_column($parts, 'valeur'));
+    $r = 40;
+    $tour = 2 * M_PI * $r;
+    $svg = '<svg class="donut" viewBox="0 0 120 120" role="img" aria-hidden="true">';
+    if ($total <= 0) {
+        return $svg . '<circle cx="60" cy="60" r="' . $r . '" fill="none" stroke="#e6e9ee" stroke-width="28"/></svg>';
+    }
+    $cumul = 0.0;
+    $textes = '';
+    foreach ($parts as $p) {
+        if ($p['valeur'] <= 0) {
+            continue;
+        }
+        $part = $p['valeur'] / $total;
+        $long = $part * $tour;
+        $svg .= sprintf('<circle cx="60" cy="60" r="%d" fill="none" stroke="%s" stroke-width="28" stroke-dasharray="%.3f %.3f" stroke-dashoffset="%.3f" transform="rotate(-90 60 60)"/>',
+            $r, e($p['couleur']), max(0, $long - 0.8), $tour, -$cumul * $tour);
+        if ($part >= 0.08) {
+            $angle = 2 * M_PI * ($cumul + $part / 2) - M_PI / 2;
+            $textes .= sprintf('<text x="%.2f" y="%.2f">%s</text>', 60 + $r * cos($angle), 60 + $r * sin($angle) + 2.4,
+                number_format($part * 100, $part < 0.1 ? 1 : 0, ',', '') . ' %');
+        }
+        $cumul += $part;
+    }
+    $svg .= '<g class="donut-pct">' . $textes . '</g>';
+    if ($centre !== '') {
+        $svg .= '<text class="donut-centre" x="60" y="64">' . e($centre) . '</text>';
+    }
+    return $svg . '</svg>';
+}

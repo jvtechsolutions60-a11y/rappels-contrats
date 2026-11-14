@@ -4,19 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($titre ?? '') ?> · <?= e($config['nom_appli'] ?? 'Rappels de contrats') ?></title>
+<link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css?v=<?= @filemtime(__DIR__ . '/../public/style.css') ?>">
 </head>
 <body>
 <?php if (empty($sansMenu)): ?>
+<?php $pageActive = (string) ($_GET['p'] ?? 'accueil'); ?>
 <header class="entete">
-  <a class="marque" href="<?= url('accueil') ?>"><?= e($config['nom_appli'] ?? 'Rappels de contrats') ?></a>
+  <a class="marque" href="<?= url('accueil') ?>"><span class="marque-logo" aria-hidden="true"></span><?= e($config['nom_appli'] ?? 'Rappels de contrats') ?></a>
   <nav>
-    <a href="<?= url('accueil') ?>">À faire</a>
-    <a href="<?= url('contrats') ?>">Contrats</a>
-    <a href="<?= url('echeancier') ?>">Échéancier</a>
-    <a href="<?= url('clients') ?>">Clients</a>
-    <a href="<?= url('import') ?>">Import</a>
-    <a href="<?= url('reglages') ?>">Réglages</a>
+    <?php foreach (['accueil' => 'Tableau de bord', 'contrats' => 'Contrats', 'echeancier' => 'Échéancier', 'clients' => 'Clients', 'import' => 'Import', 'reglages' => 'Réglages'] as $pg => $lib): ?>
+      <a href="<?= url($pg) ?>"<?= $pageActive === $pg ? ' class="actif"' : '' ?>><?= e($lib) ?></a>
+    <?php endforeach; ?>
     <a class="bouton principal" href="<?= url('contrat_form') ?>">+ Nouveau contrat</a>
   </nav>
 </header>

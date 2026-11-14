@@ -8,7 +8,14 @@ $titresBlocs = [
 $dernierEnvoi = reglage('dernier_envoi');
 $rienAFaire = !$blocs['en_retard'] && !$blocs['a_envoyer'] && !$blocs['en_attente'];
 ?>
-<h1>À faire</h1>
+<?php
+$jours = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+$moisLong = [1 => 'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+?>
+<div class="titre-page">
+  <h1>Tableau de bord</h1>
+  <span class="date-jour"><?= ucfirst($jours[(int) date('w')]) ?> <?= (int) date('j') ?> <?= $moisLong[(int) date('n')] ?> <?= date('Y') ?></span>
+</div>
 <?php if ($dernierEnvoi && str_contains($dernierEnvoi, 'ÉCHEC')): ?>
   <p class="alerte">Le dernier e-mail du matin n'est pas parti (<?= e($dernierEnvoi) ?>). Vérifiez la boîte d'envoi, puis utilisez « Envoyer un e-mail de test » dans les <a href="<?= url('reglages') ?>">réglages</a>.</p>
 <?php endif; ?>
@@ -23,6 +30,8 @@ $rienAFaire = !$blocs['en_retard'] && !$blocs['a_envoyer'] && !$blocs['en_attent
   </section>
 <?php else: ?>
   <?php require __DIR__ . '/_finances.php'; ?>
+
+  <h2 class="bandeau">À faire</h2>
 
   <?php if ($preavis): ?>
   <section class="bloc bloc-preavis">
