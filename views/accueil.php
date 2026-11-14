@@ -22,20 +22,7 @@ $rienAFaire = !$blocs['en_retard'] && !$blocs['a_envoyer'] && !$blocs['en_attent
     </p>
   </section>
 <?php else: ?>
-  <div class="chiffres">
-    <a class="chiffre" href="<?= url('contrats', ['periode' => '30']) ?>">
-      <span class="chiffre-valeur"><?= $chiffres['a_renouveler_total'] > 0 ? e(montant_fr($chiffres['a_renouveler_total'])) : $chiffres['a_renouveler_nb'] ?></span>
-      <span class="chiffre-libelle">à renouveler dans les 90 jours<?= $chiffres['a_renouveler_total'] > 0 ? ' (' . $chiffres['a_renouveler_nb'] . ' contrat' . ($chiffres['a_renouveler_nb'] > 1 ? 's' : '') . ')' : ' contrat' . ($chiffres['a_renouveler_nb'] > 1 ? 's' : '') ?></span>
-    </a>
-    <a class="chiffre <?= $chiffres['retard_nb'] ? 'chiffre-alerte' : '' ?>" href="<?= url('contrats', ['statut' => 'expire']) ?>">
-      <span class="chiffre-valeur"><?= $chiffres['retard_nb'] ?></span>
-      <span class="chiffre-libelle">en retard<?= $chiffres['retard_total'] > 0 ? ', ' . e(montant_fr($chiffres['retard_total'])) . ' en jeu' : '' ?></span>
-    </a>
-    <div class="chiffre">
-      <span class="chiffre-valeur"><?= $chiffres['taux'] === null ? '–' : $chiffres['taux'] . ' %' ?></span>
-      <span class="chiffre-libelle">de renouvellement sur 12 mois<?= $chiffres['taux_base'] ? ' (' . $chiffres['taux_base'] . ' contrat' . ($chiffres['taux_base'] > 1 ? 's' : '') . ')' : '' ?></span>
-    </div>
-  </div>
+  <?php require __DIR__ . '/_finances.php'; ?>
 
   <?php if ($preavis): ?>
   <section class="bloc bloc-preavis">

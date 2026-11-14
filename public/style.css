@@ -157,3 +157,46 @@ a.chiffre:hover { border-color: var(--discret); }
 .mois-vide h2 { color: var(--discret); font-weight: 500; }
 .jauge { height: 6px; background: #e6e9ee; border-radius: 3px; margin-bottom: 8px; overflow: hidden; }
 .jauge span { display: block; height: 100%; background: var(--principal); }
+
+/* Bloc Finances */
+.finances { margin-bottom: 24px; }
+.finances h2 { margin-top: 0; }
+.finances h3 { font-size: 1rem; margin: 0 0 10px; }
+.objectif-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 16px; }
+.objectif-tete > div:first-child { display: flex; flex-direction: column; }
+.objectif-tete .chiffre-valeur { font-size: 2rem; }
+.objectif-pct { font-size: 1.6rem; font-weight: 800; color: var(--principal); text-align: right; display: flex; flex-direction: column; }
+.objectif-pct small { font-size: .85rem; font-weight: 400; color: var(--discret); }
+.objectif-pct.atteint { color: var(--succes); }
+.jauge-objectif { height: 12px; border-radius: 6px; margin: 10px 0 6px; }
+.objectif-form label { font-weight: 600; margin-top: 10px; display: block; }
+.objectif-form input { width: 160px; }
+.chiffre-attention { border-color: #f2d49a; background: #fffaf0; }
+.chiffre-attention .chiffre-valeur { color: #7a4b00; }
+.chiffre-bilan { gap: 4px; }
+.chiffre-bilan .chiffre-valeur { font-size: 1.25rem; }
+.positif { color: var(--succes); }
+.negatif { color: var(--danger); }
+.finances-bas { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+.finances-bas .carte { margin-bottom: 0; }
+@media (max-width: 800px) { .finances-bas { grid-template-columns: 1fr; } }
+
+.histo { display: flex; align-items: flex-end; gap: 4px; height: 170px; }
+.histo-col { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; text-decoration: none; color: var(--discret); min-width: 0; }
+.histo-barre { width: 100%; max-width: 34px; display: flex; flex-direction: column; border-radius: 4px 4px 0 0; overflow: hidden; min-height: 2px; background: #eef0f3; }
+.histo-part { display: block; flex-basis: 0; }
+.histo-val { font-size: .7rem; font-weight: 600; color: var(--texte); white-space: nowrap; margin-bottom: 2px; }
+.histo-mois { font-size: .7rem; margin-top: 4px; white-space: nowrap; }
+.part-signe { background: #2e9a5c; }
+.part-envoye { background: #4a86d8; }
+.part-a_envoyer { background: #e7a73a; }
+.part-expire { background: #d64532; }
+.legende { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .8rem; color: var(--discret); margin: 10px 0 0; }
+.legende i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.top-clients { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.top-clients li { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; }
+.top-nom { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top-montant { font-variant-numeric: tabular-nums; }
+.top-montant small { color: var(--discret); }
+.top-clients .jauge { grid-column: 1 / -1; margin: 0; }
+@media (max-width: 600px) { .objectif-pct { text-align: left; } }

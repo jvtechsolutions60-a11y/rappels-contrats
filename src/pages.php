@@ -424,6 +424,12 @@ function page_reglages(): void
             rediriger('reglages');
         }
     }
+    if ($action === 'objectif') {
+        $objectif = lire_montant((string) ($_POST['objectif_annuel'] ?? ''));
+        ecrire_reglage('objectif_annuel', $objectif !== null && (float) $objectif > 0 ? $objectif : null);
+        flash($objectif ? 'Objectif enregistré : ' . montant_fr($objectif) . ' HT par an.' : 'Objectif retiré.');
+        rediriger(($_POST['retour'] ?? '') === 'accueil' ? 'accueil' : 'reglages');
+    }
     if ($action === 'test') {
         maj_expires();
         [$sujet, $html, $texte] = construire_email(calculer_rappels(), true);
@@ -464,6 +470,7 @@ function page_reglages(): void
         'erreurEmail'  => $erreurEmail,
         'emailRappels' => email_destinataire(),
         'dernierEnvoi' => reglage('dernier_envoi'),
+        'objectif'     => reglage('objectif_annuel'),
     ]);
 }
 
@@ -542,6 +549,7 @@ function page_accueil(): void
         'blocs'        => $blocs,
         'preavis'      => contrats_preavis_proches(30),
         'chiffres'     => chiffres_cles(),
+        'finances'     => finances(),
         'aucunContrat' => !db()->query('SELECT COUNT(*) FROM contrats')->fetchColumn(),
     ]);
 }
@@ -564,6 +572,70 @@ function contrats_preavis_proches(int $jours): array
     }
     usort($liste, fn ($a, $b) => $a['jours_preavis'] <=> $b['jours_preavis']);
     return $liste;
+}
+
+// Montant ramené à l'année (un contrat de 36 mois à 900 € compte 300 € par an)
+function montant_annuel(array $c): float
+{
+    $duree = max(1, (int) ($c['duree_mois'] ?? 12));
+    return (float) $c['montant'] * 12 / $duree;
+}
+
+// Tableau de bord financier de l'accueil
+function finances(): array
+{
+    $annee = date('Y');
+    $contrats = db()->query(
+        'SELECT c.*, cl.nom AS client_nom, t.duree_mois FROM contrats c
+         JOIN clients cl ON cl.id = c.client_id JOIN types_contrat t ON t.id = c.type_id'
+    )->fetchAll();
+
+    $f = ['portefeuille' => 0.0, 'nb_portefeuille' => 0, 'renouvele' => 0.0, 'nb_renouvele' => 0, 'perdu' => 0.0, 'nb_perdu' => 0,
+          'a_securiser' => 0.0, 'nb_a_securiser' => 0, 'retard' => 0.0, 'nb_retard' => 0, 'clients' => [], 'mois' => [],
+          'sans_montant' => 0, 'annee' => $annee];
+    $debut = date('Y-m-01');
+    for ($i = 0; $i < 12; $i++) {
+        $f['mois'][date('Y-m', strtotime("$debut +$i months"))] = ['signe' => 0.0, 'envoye' => 0.0, 'a_envoyer' => 0.0, 'expire' => 0.0];
+    }
+    $dans90 = date('Y-m-d', strtotime('+90 days'));
+
+    foreach ($contrats as $c) {
+        $annuel = montant_annuel($c);
+        $montant = (float) $c['montant'];
+        // Portefeuille : le dernier contrat de chaque suite, s'il n'est ni perdu ni expiré
+        if (!$c['contrat_suivant_id'] && in_array($c['statut'], ['a_envoyer', 'envoye', 'signe'], true)) {
+            $f['portefeuille'] += $annuel;
+            $f['nb_portefeuille']++;
+            $f['clients'][$c['client_nom']] = ($f['clients'][$c['client_nom']] ?? 0) + $annuel;
+            if ($c['montant'] === null) {
+                $f['sans_montant']++;
+            }
+        }
+        if ($c['statut'] === 'signe' && substr((string) $c['date_signature'], 0, 4) === $annee) {
+            $f['renouvele'] += $montant;
+            $f['nb_renouvele']++;
+        }
+        if (in_array($c['statut'], ['non_renouvele', 'expire'], true) && substr($c['date_fin'], 0, 4) === $annee) {
+            $f['perdu'] += $montant;
+            $f['nb_perdu']++;
+        }
+        if (in_array($c['statut'], ['a_envoyer', 'envoye'], true) && $c['date_fin'] <= $dans90) {
+            $f['a_securiser'] += $montant;
+            $f['nb_a_securiser']++;
+        }
+        if ($c['statut'] === 'expire') {
+            $f['retard'] += $montant;
+            $f['nb_retard']++;
+        }
+        $cle = substr($c['date_fin'], 0, 7);
+        if (isset($f['mois'][$cle][$c['statut']])) {
+            $f['mois'][$cle][$c['statut']] += $montant;
+        }
+    }
+    arsort($f['clients']);
+    $f['top'] = array_slice($f['clients'], 0, 5, true);
+    $f['objectif'] = (float) reglage('objectif_annuel', '0');
+    return $f;
 }
 
 // Les trois chiffres en haut de l'accueil

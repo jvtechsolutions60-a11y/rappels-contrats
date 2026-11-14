@@ -1,5 +1,16 @@
 <h1>Réglages</h1>
 
+<section class="carte formulaire" id="objectif">
+  <h2>Objectif de CA récurrent</h2>
+  <form method="post">
+    <?= champ_csrf() ?>
+    <input type="hidden" name="action" value="objectif">
+    <label>Objectif annuel (€ HT), affiché sur l'accueil. Laissez vide pour le retirer.
+      <input name="objectif_annuel" inputmode="decimal" value="<?= $objectif ? e(number_format((float) $objectif, 0, ',', ' ')) : '' ?>" placeholder="ex. 15 000"></label>
+    <div class="boutons"><button>Enregistrer l'objectif</button></div>
+  </form>
+</section>
+
 <section class="carte formulaire">
   <h2>E-mail du matin</h2>
   <p>Envoyé vers 7 h du lundi au vendredi, seulement s'il y a quelque chose à faire.</p>
