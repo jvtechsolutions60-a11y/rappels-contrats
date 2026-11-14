@@ -83,6 +83,22 @@ function ajouter_mois(string $date, int $mois): string
     return $d->format('Y-m-d');
 }
 
+// Date limite pour résilier (contrats à reconduction tacite), ou null
+function date_preavis(array $c): ?string
+{
+    if (empty($c['preavis_jours'])) {
+        return null;
+    }
+    return date('Y-m-d', strtotime($c['date_fin'] . ' -' . (int) $c['preavis_jours'] . ' days'));
+}
+
+// Signe un contrat et crée tout de suite celui de la période suivante. Renvoie l'id du suivant.
+function signer_contrat(int $id): ?int
+{
+    changer_statut($id, 'signe');
+    return creer_contrat_suivant($id);
+}
+
 // Crée le contrat de la période suivante (même client, même produit) et renvoie son id
 function creer_contrat_suivant(int $id): ?int
 {
@@ -97,6 +113,7 @@ function creer_contrat_suivant(int $id): ?int
         'produit'   => $c['produit'],
         'date_fin'  => $nouvelleFin,
         'montant'   => $c['montant'],
+        'preavis_jours' => $c['preavis_jours'] ?? null,
         'note'      => null,
     ], 'Créé comme suite du contrat #' . $id);
     db()->prepare('UPDATE contrats SET contrat_suivant_id = ? WHERE id = ?')->execute([$nouveauId, $id]);
@@ -107,11 +124,11 @@ function creer_contrat_suivant(int $id): ?int
 function enregistrer_contrat(array $d, string $origine = 'Saisie'): int
 {
     db()->prepare(
-        'INSERT INTO contrats (client_id, type_id, produit, date_fin, statut, montant, note, cree_le, modifie_le)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO contrats (client_id, type_id, produit, date_fin, statut, montant, preavis_jours, note, cree_le, modifie_le)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )->execute([
         $d['client_id'], $d['type_id'], $d['produit'], $d['date_fin'],
-        $d['statut'] ?? 'a_envoyer', $d['montant'], $d['note'], maintenant(), maintenant(),
+        $d['statut'] ?? 'a_envoyer', $d['montant'], $d['preavis_jours'] ?? null, $d['note'], maintenant(), maintenant(),
     ]);
     $id = (int) db()->lastInsertId();
     journaliser($id, 'creation', $origine);

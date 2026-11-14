@@ -13,6 +13,13 @@ if ($aucunCompte) {
     exit;
 }
 
+// Bouton de l'e-mail du matin : protégé par son propre jeton, sans connexion
+if ($page === 'action_mail') {
+    maj_expires();
+    page_action_mail();
+    exit;
+}
+
 if ($page === 'connexion') {
     page_connexion();
     exit;
@@ -34,6 +41,7 @@ $pages = [
     'import'         => 'page_import',
     'modele'         => 'page_modele',
     'contrats'       => 'page_contrats',
+    'echeancier'     => 'page_echeancier',
     'contrat'        => 'page_contrat',
     'contrat_form'   => 'page_contrat_form',
     'contrat_action' => 'page_contrat_action',

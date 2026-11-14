@@ -29,6 +29,10 @@
     <dt>Type</dt><dd><?= e($c['type_nom']) ?> <small>(rappels <?= e(texte_jalons($c['jalons'])) ?>)</small></dd>
     <dt>Produit</dt><dd><?= e($c['produit']) ?></dd>
     <dt>Date de fin</dt><dd><?= date_fr($c['date_fin']) ?></dd>
+    <?php if ($limite = date_preavis($c)): $jp = jours_restants($limite); ?>
+      <dt>Préavis</dt><dd><?= (int) $c['preavis_jours'] ?> jours : résilier avant le <strong><?= date_fr($limite) ?></strong>
+        <?php if ($ouvert): ?><span class="<?= $jp < 15 ? 'retard' : '' ?>">(<?= e(texte_jours($jp)) ?>)</span><?php endif; ?></dd>
+    <?php endif; ?>
     <?php if ($c['montant'] !== null): ?><dt>Montant</dt><dd><?= e(montant_fr($c['montant'])) ?></dd><?php endif; ?>
     <?php if ($c['date_envoi_devis']): ?><dt>Devis envoyé le</dt><dd><?= date_fr($c['date_envoi_devis']) ?></dd><?php endif; ?>
     <?php if ($c['date_signature']): ?><dt>Signé le</dt><dd><?= date_fr($c['date_signature']) ?></dd><?php endif; ?>

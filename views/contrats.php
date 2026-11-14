@@ -3,7 +3,15 @@
   <p class="alerte">Le dernier e-mail du matin n'est pas parti (<?= e($dernierEnvoi) ?>). Vérifiez la boîte d'envoi, puis utilisez « Envoyer un e-mail de test » dans les <a href="<?= url('reglages') ?>">réglages</a>.</p>
 <?php endif; ?>
 
+<p class="pastilles">
+  <a class="pastille <?= $periode === '' ? 'active' : '' ?>" href="<?= url('contrats', array_filter(['q' => $q, 'type' => $typeId ?: null])) ?>">Tout</a>
+  <?php foreach (PERIODES as $cle => $libelle): ?>
+    <a class="pastille <?= $periode === (string) $cle ? 'active' : '' ?>" href="<?= url('contrats', array_filter(['periode' => $cle, 'q' => $q, 'type' => $typeId ?: null])) ?>"><?= e($libelle) ?></a>
+  <?php endforeach; ?>
+</p>
+
 <form method="get" class="filtres">
+  <?php if ($periode !== ''): ?><input type="hidden" name="periode" value="<?= e($periode) ?>"><?php endif; ?>
   <input type="hidden" name="p" value="contrats">
   <input type="search" name="q" placeholder="Client ou produit" value="<?= e($q) ?>">
   <select name="statut">
@@ -22,8 +30,11 @@
   <button>Filtrer</button>
 </form>
 
+<?php if ($contrats && array_filter(array_column($contrats, 'montant'))): ?>
+  <p class="note"><?= count($contrats) ?> contrat<?= count($contrats) > 1 ? 's' : '' ?>, total <?= e(montant_fr((string) array_sum(array_column($contrats, 'montant')))) ?> HT</p>
+<?php endif; ?>
 <?php if (!$contrats): ?>
-  <p class="vide">Aucun contrat<?= $q || $statut || $typeId ? ' pour ces critères' : '' ?>.
+  <p class="vide">Aucun contrat<?= $q || $statut || $typeId || $periode ? ' pour ces critères' : '' ?>.
     <a href="<?= url('contrat_form') ?>">Saisir un contrat</a></p>
 <?php else: ?>
 <table class="liste">

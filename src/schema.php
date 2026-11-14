@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const VERSION_SCHEMA = 2;
+const VERSION_SCHEMA = 3;
 
 // Crée les tables au premier lancement (ou ajoute les nouvelles après une mise à jour), puis ne fait plus rien.
 function creer_tables(PDO $pdo): void
@@ -42,6 +42,7 @@ function creer_tables(PDO $pdo): void
             date_fin DATE NOT NULL,
             statut VARCHAR(20) NOT NULL DEFAULT 'a_envoyer',
             montant DECIMAL(10,2) NULL,
+            preavis_jours INT NULL,
             note TEXT NULL,
             date_envoi_devis DATE NULL,
             date_signature DATE NULL,
@@ -87,6 +88,14 @@ function creer_tables(PDO $pdo): void
 
     foreach ($tables as $sql) {
         $pdo->exec($sql);
+    }
+    // Version 3 : préavis de résiliation (jours avant la fin) sur les contrats déjà créés
+    if ($version > 0 && $version < 3) {
+        try {
+            $pdo->exec('ALTER TABLE contrats ADD COLUMN preavis_jours INT NULL');
+        } catch (PDOException $e) {
+            // colonne déjà présente
+        }
     }
     $pdo->prepare('DELETE FROM reglages WHERE cle = ?')->execute(['version_schema']);
     $pdo->prepare('INSERT INTO reglages (cle, valeur) VALUES (?, ?)')->execute(['version_schema', (string) VERSION_SCHEMA]);

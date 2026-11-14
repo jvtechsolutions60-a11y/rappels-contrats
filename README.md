@@ -37,6 +37,8 @@ Mise à jour : cPanel, « Git Version Control », « Gérer » puis « Mettre à
 - Un contrat « À envoyer » ou « Envoyé » remonte dans l'e-mail le jour où il atteint un jalon, une seule fois par jalon. S'il en a sauté plusieurs (saisie tardive, week-end), seul le plus récent compte.
 - Un contrat dont la date de fin est dépassée sans signature passe « Expiré » et remonte tous les jours.
 - « Signé » et « Non renouvelé » arrêtent les rappels. Changer la date de fin relance les jalons.
+- Un contrat peut avoir un préavis de résiliation (en jours) : l'e-mail prévient à 30 jours, 7 jours et le jour de la date limite pour résilier.
+- Les boutons « Devis envoyé » et « Signé » de l'e-mail marchent sans se connecter (lien signé, valable 30 jours, avec une page de confirmation). « Signé » crée tout de suite le contrat de la période suivante.
 - Pas d'e-mail le week-end ni les jours sans rien à signaler. Si l'envoi échoue, rien n'est noté comme envoyé et un bandeau rouge s'affiche dans l'application.
 
 ## Import des contrats existants

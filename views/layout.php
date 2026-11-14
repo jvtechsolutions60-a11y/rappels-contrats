@@ -13,6 +13,7 @@
   <nav>
     <a href="<?= url('accueil') ?>">À faire</a>
     <a href="<?= url('contrats') ?>">Contrats</a>
+    <a href="<?= url('echeancier') ?>">Échéancier</a>
     <a href="<?= url('clients') ?>">Clients</a>
     <a href="<?= url('import') ?>">Import</a>
     <a href="<?= url('reglages') ?>">Réglages</a>

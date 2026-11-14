@@ -59,9 +59,26 @@ function page_contrats(): void
     $q = trim((string) ($_GET['q'] ?? ''));
     $statut = (string) ($_GET['statut'] ?? '');
     $typeId = (int) ($_GET['type'] ?? 0);
+    $periode = (string) ($_GET['periode'] ?? '');
 
     $where = [];
     $params = [];
+    $bornes = periode_bornes($periode);
+    if ($bornes) {
+        // Les contrats en retard restent visibles dans « 15 jours » et « 30 jours »
+        if ($bornes[0] === null) {
+            $where[] = 'c.date_fin <= ?';
+            $params[] = $bornes[1];
+        } else {
+            $where[] = 'c.date_fin BETWEEN ? AND ?';
+            array_push($params, $bornes[0], $bornes[1]);
+        }
+        if ($statut === '') {
+            $statut = 'ouverts';
+        }
+    } else {
+        $periode = '';
+    }
     if ($q !== '') {
         $where[] = '(LOWER(cl.nom) LIKE LOWER(?) OR LOWER(c.produit) LIKE LOWER(?))';
         $params[] = "%$q%";
@@ -93,7 +110,22 @@ function page_contrats(): void
         'q'        => $q,
         'statut'   => $statut,
         'typeId'   => $typeId,
+        'periode'  => $periode,
     ]);
+}
+
+const PERIODES = ['15' => '15 jours', '30' => '30 jours', 'mois' => 'Ce mois', 'annee' => 'Cette année'];
+
+// [début ou null, fin] d'une période rapide, ou null si inconnue
+function periode_bornes(string $periode): ?array
+{
+    return match ($periode) {
+        '15'    => [null, date('Y-m-d', strtotime('+15 days'))],
+        '30'    => [null, date('Y-m-d', strtotime('+30 days'))],
+        'mois'  => [date('Y-m-01'), date('Y-m-t')],
+        'annee' => [date('Y-01-01'), date('Y-12-31')],
+        default => null,
+    };
 }
 
 function page_contrat(): void
@@ -127,6 +159,7 @@ function page_contrat_form(): void
         'date_fin'   => '',
         'montant'    => null,
         'note'       => '',
+        'preavis_jours' => '',
         'statut'     => 'a_envoyer',
     ];
     $erreurs = [];
@@ -139,6 +172,7 @@ function page_contrat_form(): void
             'date_fin'   => (string) ($_POST['date_fin'] ?? ''),
             'montant'    => (string) ($_POST['montant'] ?? ''),
             'note'       => trim((string) ($_POST['note'] ?? '')),
+            'preavis_jours' => trim((string) ($_POST['preavis_jours'] ?? '')),
             'statut'     => (string) ($_POST['statut'] ?? ($existant['statut'] ?? 'a_envoyer')),
         ];
         $dateFin = lire_date($valeurs['date_fin']);
@@ -165,6 +199,9 @@ function page_contrat_form(): void
         if ($valeurs['montant'] !== '' && $montant === null) {
             $erreurs['montant'] = 'Montant invalide.';
         }
+        if ($valeurs['preavis_jours'] !== '' && (!ctype_digit($valeurs['preavis_jours']) || (int) $valeurs['preavis_jours'] > 365)) {
+            $erreurs['preavis_jours'] = 'Indiquez un nombre de jours (0 à 365), ou laissez vide.';
+        }
         if (!isset(STATUTS[$valeurs['statut']])) {
             $erreurs['statut'] = 'Statut inconnu.';
         }
@@ -177,10 +214,16 @@ function page_contrat_form(): void
                 'produit'   => $valeurs['produit'],
                 'date_fin'  => $dateFin,
                 'montant'   => $montant,
+                'preavis_jours' => $valeurs['preavis_jours'] !== '' ? (int) $valeurs['preavis_jours'] : null,
                 'note'      => $valeurs['note'] !== '' ? $valeurs['note'] : null,
             ];
             if ($existant) {
                 modifier_contrat($existant, $donnees);
+                if ($valeurs['statut'] === 'signe' && $existant['statut'] !== 'signe') {
+                    $suivant = signer_contrat($existant['id']);
+                    flash('Contrat signé. Le contrat de la période suivante est créé' . ($suivant ? ' (fin le ' . date_fr(trouver_contrat($suivant)['date_fin']) . ')' : '') . '.');
+                    rediriger('contrat', ['id' => $existant['id']]);
+                }
                 changer_statut($existant['id'], $valeurs['statut']);
                 flash('Contrat enregistré.');
                 rediriger('contrat', ['id' => $existant['id']]);
@@ -210,7 +253,7 @@ function page_contrat_form(): void
 function modifier_contrat(array $avant, array $d): void
 {
     $libelles = ['client_id' => 'client', 'type_id' => 'type', 'produit' => 'produit',
-                 'date_fin' => 'date de fin', 'montant' => 'montant', 'note' => 'note'];
+                 'date_fin' => 'date de fin', 'montant' => 'montant', 'preavis_jours' => 'préavis', 'note' => 'note'];
     $changes = [];
     $normaliser = fn ($champ, $v) => $champ === 'montant' && $v !== null ? number_format((float) $v, 2, '.', '') : (string) $v;
     foreach ($libelles as $champ => $libelle) {
@@ -222,9 +265,9 @@ function modifier_contrat(array $avant, array $d): void
         return;
     }
     db()->prepare(
-        'UPDATE contrats SET client_id = ?, type_id = ?, produit = ?, date_fin = ?, montant = ?, note = ?, modifie_le = ?
+        'UPDATE contrats SET client_id = ?, type_id = ?, produit = ?, date_fin = ?, montant = ?, preavis_jours = ?, note = ?, modifie_le = ?
          WHERE id = ?'
-    )->execute([$d['client_id'], $d['type_id'], $d['produit'], $d['date_fin'], $d['montant'], $d['note'], maintenant(), $avant['id']]);
+    )->execute([$d['client_id'], $d['type_id'], $d['produit'], $d['date_fin'], $d['montant'], $d['preavis_jours'], $d['note'], maintenant(), $avant['id']]);
     $detail = 'Modifié : ' . implode(', ', $changes);
     if (in_array('date de fin', $changes, true)) {
         $detail .= ' (' . date_fr($avant['date_fin']) . ' → ' . date_fr($d['date_fin']) . ')';
@@ -251,9 +294,10 @@ function page_contrat_action(): void
             flash('Devis noté comme envoyé : ' . $contrat['client_nom'] . ' – ' . $contrat['produit'] . '.');
             break;
         case 'signe':
-            changer_statut($id, 'signe');
-            flash('Contrat signé, les rappels sont arrêtés.');
-            rediriger('contrat', ['id' => $id]); // la fiche propose de créer le contrat suivant
+            $suivant = signer_contrat($id);
+            flash('Contrat signé. Le contrat de la période suivante est créé'
+                . ($suivant ? ' (fin le ' . date_fr(trouver_contrat($suivant)['date_fin']) . ')' : '') . ', les rappels repartiront tout seuls.');
+            break;
         case 'non_renouvele':
             changer_statut($id, 'non_renouvele');
             flash('Contrat noté comme non renouvelé, les rappels sont arrêtés.');
@@ -493,7 +537,140 @@ function page_accueil(): void
             $blocs['a_venir'][] = $c;
         }
     }
-    afficher('accueil', ['titre' => 'À faire', 'blocs' => $blocs, 'aucunContrat' => !db()->query('SELECT COUNT(*) FROM contrats')->fetchColumn()]);
+    afficher('accueil', [
+        'titre'        => 'À faire',
+        'blocs'        => $blocs,
+        'preavis'      => contrats_preavis_proches(30),
+        'chiffres'     => chiffres_cles(),
+        'aucunContrat' => !db()->query('SELECT COUNT(*) FROM contrats')->fetchColumn(),
+    ]);
+}
+
+// Contrats en cours dont la date limite de préavis tombe dans les $jours prochains jours
+function contrats_preavis_proches(int $jours): array
+{
+    $liste = [];
+    $contrats = db()->query(
+        "SELECT c.*, cl.nom AS client_nom, t.nom AS type_nom FROM contrats c
+         JOIN clients cl ON cl.id = c.client_id JOIN types_contrat t ON t.id = c.type_id
+         WHERE c.preavis_jours IS NOT NULL AND c.statut IN ('a_envoyer', 'envoye', 'expire')"
+    )->fetchAll();
+    foreach ($contrats as $c) {
+        $c['date_preavis'] = date_preavis($c);
+        $c['jours_preavis'] = jours_restants($c['date_preavis']);
+        if ($c['jours_preavis'] >= 0 && $c['jours_preavis'] <= $jours) {
+            $liste[] = $c;
+        }
+    }
+    usort($liste, fn ($a, $b) => $a['jours_preavis'] <=> $b['jours_preavis']);
+    return $liste;
+}
+
+// Les trois chiffres en haut de l'accueil
+function chiffres_cles(): array
+{
+    $dans90 = date('Y-m-d', strtotime('+90 days'));
+    $st = db()->prepare(
+        "SELECT COUNT(*) AS nb, COALESCE(SUM(montant), 0) AS total FROM contrats
+         WHERE statut IN ('a_envoyer', 'envoye') AND date_fin BETWEEN ? AND ?"
+    );
+    $st->execute([aujourdhui(), $dans90]);
+    $aRenouveler = $st->fetch();
+
+    $retard = db()->query(
+        "SELECT COUNT(*) AS nb, COALESCE(SUM(montant), 0) AS total FROM contrats WHERE statut = 'expire'"
+    )->fetch();
+
+    // Taux de renouvellement : contrats arrivés à échéance ces 12 derniers mois
+    $st = db()->prepare(
+        "SELECT SUM(CASE WHEN statut = 'signe' THEN 1 ELSE 0 END) AS signes,
+                SUM(CASE WHEN statut IN ('signe', 'non_renouvele', 'expire') THEN 1 ELSE 0 END) AS termines
+         FROM contrats WHERE date_fin BETWEEN ? AND ?"
+    );
+    $st->execute([date('Y-m-d', strtotime('-12 months')), date('Y-m-d', strtotime('+90 days'))]);
+    $taux = $st->fetch();
+    $termines = (int) $taux['termines'];
+
+    return [
+        'a_renouveler_nb'    => (int) $aRenouveler['nb'],
+        'a_renouveler_total' => (string) $aRenouveler['total'],
+        'retard_nb'          => (int) $retard['nb'],
+        'retard_total'       => (string) $retard['total'],
+        'taux'               => $termines ? (int) round(100 * (int) $taux['signes'] / $termines) : null,
+        'taux_base'          => $termines,
+    ];
+}
+
+// ---------- Bouton reçu dans l'e-mail du matin (pas besoin d'être connecté) ----------
+
+function page_action_mail(): void
+{
+    $source = est_post() ? $_POST : $_GET;
+    $c = verifier_lien_action($source);
+    $libelles = ['envoye' => 'Devis envoyé', 'signe' => 'Signé'];
+    $action = (string) ($source['a'] ?? '');
+    $vue = ['titre' => 'Action rapide', 'sansMenu' => true, 'erreur' => null, 'fait' => null, 'c' => null,
+            'action' => $action, 'libelle' => $libelles[$action] ?? '', 'params' => $source];
+    if (is_string($c)) {
+        $vue['erreur'] = $c;
+        afficher('action_mail', $vue);
+        return;
+    }
+    $vue['c'] = $c;
+    $possible = $action === 'envoye' ? $c['statut'] === 'a_envoyer' : in_array($c['statut'], STATUTS_OUVERTS, true);
+    if (!$possible) {
+        $vue['fait'] = 'Rien à faire : ce contrat est déjà « ' . libelle_statut($c['statut']) . ' ».';
+    } elseif (est_post()) {
+        if ($action === 'signe') {
+            $suivant = signer_contrat((int) $c['id']);
+            $vue['fait'] = 'Contrat noté comme signé. Le contrat de la période suivante est créé'
+                . ($suivant ? ' (fin le ' . date_fr(trouver_contrat($suivant)['date_fin']) . ')' : '') . '.';
+        } else {
+            changer_statut((int) $c['id'], 'envoye');
+            $vue['fait'] = 'Devis noté comme envoyé aujourd\'hui.';
+        }
+        journaliser((int) $c['id'], 'email', 'Action faite depuis le bouton de l\'e-mail du matin');
+    }
+    afficher('action_mail', $vue);
+}
+
+// ---------- Échéancier : les 12 prochains mois ----------
+
+function page_echeancier(): void
+{
+    $debut = date('Y-m-01');
+    $fin = date('Y-m-t', strtotime($debut . ' +11 months'));
+    $st = db()->prepare(
+        "SELECT c.*, cl.nom AS client_nom, t.nom AS type_nom FROM contrats c
+         JOIN clients cl ON cl.id = c.client_id JOIN types_contrat t ON t.id = c.type_id
+         WHERE c.statut != 'non_renouvele' AND (c.date_fin BETWEEN ? AND ? OR c.statut = 'expire')
+         ORDER BY c.date_fin, cl.nom"
+    );
+    $st->execute([$debut, $fin]);
+
+    $mois = [];
+    for ($i = 0; $i < 12; $i++) {
+        $cle = date('Y-m', strtotime($debut . " +$i months"));
+        $mois[$cle] = ['contrats' => [], 'total' => 0.0, 'nb_ouverts' => 0];
+    }
+    $retard = ['contrats' => [], 'total' => 0.0, 'nb_ouverts' => 0];
+    foreach ($st->fetchAll() as $c) {
+        $cle = substr($c['date_fin'], 0, 7);
+        if ($c['date_fin'] < $debut) {
+            $groupe = &$retard;
+        } elseif (isset($mois[$cle])) {
+            $groupe = &$mois[$cle];
+        } else {
+            continue;
+        }
+        $groupe['contrats'][] = $c;
+        if (in_array($c['statut'], STATUTS_OUVERTS, true)) {
+            $groupe['total'] += (float) $c['montant'];
+            $groupe['nb_ouverts']++;
+        }
+        unset($groupe);
+    }
+    afficher('echeancier', ['titre' => 'Échéancier', 'mois' => $mois, 'retard' => $retard]);
 }
 
 // ---------- Import CSV ----------

@@ -133,3 +133,27 @@ dl.infos dd { margin: 0; }
 @media (max-width: 640px) {
   .liste td.col-compteur { width: auto; padding-top: 8px; }
 }
+
+/* Filtres rapides par période */
+.pastilles { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.pastille { padding: 5px 14px; border-radius: 999px; border: 1px solid var(--bord); background: var(--carte); color: var(--texte); text-decoration: none; font-size: .95rem; }
+.pastille:hover { border-color: var(--discret); }
+.pastille.active { background: var(--principal); border-color: var(--principal); color: #fff; }
+
+/* Chiffres clés de l'accueil */
+.chiffres { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.chiffre { display: flex; flex-direction: column; gap: 2px; background: var(--carte); border: 1px solid var(--bord); border-radius: 8px; padding: 12px 14px; color: var(--texte); text-decoration: none; }
+a.chiffre:hover { border-color: var(--discret); }
+.chiffre-valeur { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.chiffre-libelle { color: var(--discret); font-size: .9rem; }
+.chiffre-alerte { border-color: #f3b8b0; background: #fff7f6; }
+.chiffre-alerte .chiffre-valeur { color: #8f1d13; }
+.bloc-preavis .compte { background: #fff1d6; color: #7a4b00; }
+
+/* Échéancier */
+.mois { margin-bottom: 18px; }
+.mois h2 { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 6px; }
+.mois-total { font-size: .95rem; font-weight: 600; color: var(--discret); }
+.mois-vide h2 { color: var(--discret); font-weight: 500; }
+.jauge { height: 6px; background: #e6e9ee; border-radius: 3px; margin-bottom: 8px; overflow: hidden; }
+.jauge span { display: block; height: 100%; background: var(--principal); }

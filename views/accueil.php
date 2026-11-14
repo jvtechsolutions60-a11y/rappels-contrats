@@ -22,6 +22,39 @@ $rienAFaire = !$blocs['en_retard'] && !$blocs['a_envoyer'] && !$blocs['en_attent
     </p>
   </section>
 <?php else: ?>
+  <div class="chiffres">
+    <a class="chiffre" href="<?= url('contrats', ['periode' => '30']) ?>">
+      <span class="chiffre-valeur"><?= $chiffres['a_renouveler_total'] > 0 ? e(montant_fr($chiffres['a_renouveler_total'])) : $chiffres['a_renouveler_nb'] ?></span>
+      <span class="chiffre-libelle">à renouveler dans les 90 jours<?= $chiffres['a_renouveler_total'] > 0 ? ' (' . $chiffres['a_renouveler_nb'] . ' contrat' . ($chiffres['a_renouveler_nb'] > 1 ? 's' : '') . ')' : ' contrat' . ($chiffres['a_renouveler_nb'] > 1 ? 's' : '') ?></span>
+    </a>
+    <a class="chiffre <?= $chiffres['retard_nb'] ? 'chiffre-alerte' : '' ?>" href="<?= url('contrats', ['statut' => 'expire']) ?>">
+      <span class="chiffre-valeur"><?= $chiffres['retard_nb'] ?></span>
+      <span class="chiffre-libelle">en retard<?= $chiffres['retard_total'] > 0 ? ', ' . e(montant_fr($chiffres['retard_total'])) . ' en jeu' : '' ?></span>
+    </a>
+    <div class="chiffre">
+      <span class="chiffre-valeur"><?= $chiffres['taux'] === null ? '–' : $chiffres['taux'] . ' %' ?></span>
+      <span class="chiffre-libelle">de renouvellement sur 12 mois<?= $chiffres['taux_base'] ? ' (' . $chiffres['taux_base'] . ' contrat' . ($chiffres['taux_base'] > 1 ? 's' : '') . ')' : '' ?></span>
+    </div>
+  </div>
+
+  <?php if ($preavis): ?>
+  <section class="bloc bloc-preavis">
+    <h2>Préavis à surveiller <span class="compte"><?= count($preavis) ?></span></h2>
+    <p class="note">Date limite pour résilier un contrat à reconduction tacite.</p>
+    <ul class="taches">
+    <?php foreach ($preavis as $p): ?>
+      <li>
+        <div class="compteur compteur-<?= $p['jours_preavis'] < 15 ? 'urgent' : 'bientot' ?>"><span class="compteur-jours"><?= e(texte_compteur($p['jours_preavis'])) ?></span><span class="compteur-date"><?= date_fr($p['date_preavis']) ?></span></div>
+        <div class="tache-texte">
+          <a href="<?= url('contrat', ['id' => $p['id']]) ?>"><strong><?= e($p['client_nom']) ?></strong> – <?= e($p['produit']) ?></a>
+          <br><small>Résilier avant le <?= date_fr($p['date_preavis']) ?> · fin le <?= date_fr($p['date_fin']) ?></small>
+        </div>
+      </li>
+    <?php endforeach; ?>
+    </ul>
+  </section>
+  <?php endif; ?>
+
   <?php if ($rienAFaire): ?><p class="flash">Rien d'urgent : aucun devis à envoyer ni à relancer.</p><?php endif; ?>
 
   <?php foreach ($titresBlocs as $cle => [$titreBloc, $aide]):

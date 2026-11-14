@@ -48,11 +48,16 @@ $montant = $valeurs['montant'] === null ? '' : str_replace('.', ',', (string) $v
     <?php endif; ?>
   </div>
 
-  <details <?= isset($erreurs['montant']) || isset($erreurs['statut']) || ($existant && ($valeurs['note'] || $montant !== '')) ? 'open' : '' ?>>
+  <details <?= isset($erreurs['montant']) || isset($erreurs['statut']) || isset($erreurs['preavis_jours']) || ($existant && ($valeurs['note'] || $montant !== '' || (string) ($valeurs['preavis_jours'] ?? '') !== '')) ? 'open' : '' ?>>
     <summary>Plus de détails</summary>
     <label>Montant (€ HT)
       <input name="montant" inputmode="decimal" value="<?= e($montant) ?>">
       <?php if (isset($erreurs['montant'])): ?><span class="erreur"><?= e($erreurs['montant']) ?></span><?php endif; ?>
+    </label>
+    <label>Préavis de résiliation (jours avant la fin)
+      <input name="preavis_jours" inputmode="numeric" value="<?= e((string) ($valeurs['preavis_jours'] ?? '')) ?>" placeholder="ex. 90, vide si aucun">
+      <small>Pour un contrat à reconduction tacite : vous serez prévenu avant la date limite pour résilier.</small>
+      <?php if (isset($erreurs['preavis_jours'])): ?><span class="erreur"><?= e($erreurs['preavis_jours']) ?></span><?php endif; ?>
     </label>
     <label>Note
       <textarea name="note" rows="3"><?= e($valeurs['note']) ?></textarea>
