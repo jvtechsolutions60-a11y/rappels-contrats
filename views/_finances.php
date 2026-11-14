@@ -18,17 +18,17 @@ $idsTypes = array_keys(array_filter($f['types'], fn ($t) => $t['nb'] > 0));
 // Top 5 clients + « Autres »
 $top = [];
 $i = 0;
-foreach ($f['top'] as $nom => $montant) { $top[] = ['nom' => $nom, 'valeur' => $montant, 'couleur' => PALETTE[$i++ % count(PALETTE)]]; }
+foreach ($f['top'] as $nom => $montant) { $top[] = ['nom' => $nom, 'valeur' => $montant, 'couleur' => PALETTE[$i++ % count(PALETTE)], 'lien' => url('client', ['id' => $f['client_ids'][$nom]])]; }
 $autres = $f['portefeuille'] - array_sum(array_column($top, 'valeur'));
-if ($autres > 0.5) { $top[] = ['nom' => 'Autres clients', 'valeur' => $autres, 'couleur' => '#b0bac3']; }
+if ($autres > 0.5) { $top[] = ['nom' => 'Autres clients', 'valeur' => $autres, 'couleur' => '#b0bac3', 'lien' => url('clients')]; }
 ?>
 <h2 class="bandeau">Finances</h2>
 
 <div class="tuiles">
   <div class="tuile tuile-pleine tuile-ca">
     <span class="tuile-titre">CA récurrent annuel (HT)</span>
-    <span class="tuile-geant"><?= e(number_format($f['portefeuille'], 0, ',', ' ')) ?><small> €</small></span>
-    <span class="tuile-sous"><?= $pluriel($f['nb_portefeuille'], 'contrat') ?> en portefeuille</span>
+    <a class="tuile-geant" href="<?= url('contrats', ['statut' => 'tous']) ?>"><?= e(number_format($f['portefeuille'], 0, ',', ' ')) ?><small> €</small></a>
+    <a class="tuile-sous" href="<?= url('contrats', ['statut' => 'tous']) ?>"><?= $pluriel($f['nb_portefeuille'], 'contrat') ?> en portefeuille ›</a>
     <?php if ($pct !== null): ?>
       <div class="objectif-ligne">
         <div class="jauge-blanche"><span style="width: <?= min(100, $pct) ?>%"></span></div>
@@ -47,18 +47,18 @@ if ($autres > 0.5) { $top[] = ['nom' => 'Autres clients', 'valeur' => $autres, '
     <?php endif; ?>
   </div>
 
-  <div class="tuile tuile-pleine">
+  <a class="tuile tuile-pleine" href="<?= url('clients') ?>">
     <span class="tuile-titre">Clients sous contrat</span>
     <span class="tuile-grand"><?= $nbClients ?></span>
-  </div>
+  </a>
 
-  <a class="tuile <?= $f['nb_a_securiser'] ? 'tuile-attention' : '' ?>" href="<?= url('contrats', ['periode' => '30']) ?>">
+  <a class="tuile <?= $f['nb_a_securiser'] ? 'tuile-attention' : '' ?>" href="<?= url('contrats', ['periode' => '90']) ?>">
     <span class="tuile-titre">À sécuriser sous 90 jours</span>
     <span class="tuile-moyen"><?= $m($f['a_securiser']) ?></span>
     <span class="tuile-pied"><span><?= $pluriel($f['nb_a_securiser'], 'contrat') ?> à renouveler</span></span>
   </a>
 
-  <div class="tuile">
+  <a class="tuile" href="<?= url('contrats', ['statut' => 'signe']) ?>">
     <span class="tuile-titre">Bilan <?= e($f['annee']) ?></span>
     <span class="tuile-moyen"><?= $chiffres['taux'] === null ? '–' : $chiffres['taux'] . ' %' ?></span>
     <span class="tuile-sous-gris">taux de renouvellement</span>
@@ -66,7 +66,7 @@ if ($autres > 0.5) { $top[] = ['nom' => 'Autres clients', 'valeur' => $autres, '
       <span>Renouvelés<br><b class="positif"><?= $f['renouvele'] > 0 ? '+' : '' ?><?= $m($f['renouvele']) ?></b></span>
       <span>Perdus<br><b class="<?= $f['perdu'] > 0 ? 'negatif' : '' ?>"><?= $f['perdu'] > 0 ? '−' : '' ?><?= $m($f['perdu']) ?></b></span>
     </span>
-  </div>
+  </a>
 
   <a class="tuile <?= $f['nb_retard'] ? 'tuile-alerte' : '' ?>" href="<?= url('contrats', ['statut' => 'expire']) ?>">
     <span class="tuile-titre">En retard</span>
@@ -114,7 +114,7 @@ if ($autres > 0.5) { $top[] = ['nom' => 'Autres clients', 'valeur' => $autres, '
         <tbody>
         <?php foreach ($top as $c): ?>
           <tr>
-            <td><i style="background: <?= e($c['couleur']) ?>"></i><?= e($c['nom']) ?></td>
+            <td><a href="<?= e($c['lien']) ?>"><i style="background: <?= e($c['couleur']) ?>"></i><?= e($c['nom']) ?></a></td>
             <td><?= (int) round(100 * $c['valeur'] / $f['portefeuille']) ?> %</td>
             <td><?= $m($c['valeur']) ?></td>
           </tr>
@@ -135,7 +135,7 @@ if ($autres > 0.5) { $top[] = ['nom' => 'Autres clients', 'valeur' => $autres, '
     <?php foreach ($f['mois'] as $cle => $parts):
         $total = array_sum($parts);
         [$a, $mo] = explode('-', $cle); ?>
-      <a class="histo-col" href="<?= url('echeancier') ?>" title="<?= e(ucfirst($nomsMois[(int) $mo]) . ' ' . $a . ' : ' . $m($total)) ?>">
+      <a class="histo-col" href="<?= url('echeancier') ?>#m-<?= e($cle) ?>" title="<?= e(ucfirst($nomsMois[(int) $mo]) . ' ' . $a . ' : ' . $m($total)) ?>">
         <span class="histo-val"><?= $total > 0 ? e(number_format($total, 0, ',', ' ')) . ' €' : '' ?></span>
         <span class="histo-barre" style="height: <?= round(100 * $total / $maxMois) ?>%">
           <?php foreach (['expire', 'a_envoyer', 'envoye', 'signe'] as $st): if ($parts[$st] > 0): ?>

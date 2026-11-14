@@ -114,7 +114,7 @@ function page_contrats(): void
     ]);
 }
 
-const PERIODES = ['15' => '15 jours', '30' => '30 jours', 'mois' => 'Ce mois', 'annee' => 'Cette année'];
+const PERIODES = ['15' => '15 jours', '30' => '30 jours', '90' => '90 jours', 'mois' => 'Ce mois', 'annee' => 'Cette année'];
 
 // [début ou null, fin] d'une période rapide, ou null si inconnue
 function periode_bornes(string $periode): ?array
@@ -122,6 +122,7 @@ function periode_bornes(string $periode): ?array
     return match ($periode) {
         '15'    => [null, date('Y-m-d', strtotime('+15 days'))],
         '30'    => [null, date('Y-m-d', strtotime('+30 days'))],
+        '90'    => [null, date('Y-m-d', strtotime('+90 days'))],
         'mois'  => [date('Y-m-01'), date('Y-m-t')],
         'annee' => [date('Y-01-01'), date('Y-12-31')],
         default => null,
@@ -591,7 +592,7 @@ function finances(): array
     )->fetchAll();
 
     $f = ['portefeuille' => 0.0, 'nb_portefeuille' => 0, 'renouvele' => 0.0, 'nb_renouvele' => 0, 'perdu' => 0.0, 'nb_perdu' => 0,
-          'a_securiser' => 0.0, 'nb_a_securiser' => 0, 'retard' => 0.0, 'nb_retard' => 0, 'clients' => [], 'mois' => [],
+          'client_ids' => [], 'a_securiser' => 0.0, 'nb_a_securiser' => 0, 'retard' => 0.0, 'nb_retard' => 0, 'clients' => [], 'mois' => [],
           'sans_montant' => 0, 'annee' => $annee];
     $debut = date('Y-m-01');
     for ($i = 0; $i < 12; $i++) {
@@ -611,6 +612,7 @@ function finances(): array
             $f['portefeuille'] += $annuel;
             $f['nb_portefeuille']++;
             $f['clients'][$c['client_nom']] = ($f['clients'][$c['client_nom']] ?? 0) + $annuel;
+            $f['client_ids'][$c['client_nom']] = $c['client_id'];
             if (isset($f['types'][$c['type_id']])) {
                 $f['types'][$c['type_id']]['clients'][$c['client_id']] = true;
                 $f['types'][$c['type_id']]['nb']++;

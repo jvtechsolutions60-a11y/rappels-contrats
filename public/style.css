@@ -282,3 +282,8 @@ a.tuile:hover { box-shadow: 0 0 0 2px var(--turquoise); }
 .alerte { background: #fdf0ee; border: 0; border-left: 4px solid var(--danger); border-radius: 2px; padding: 10px 14px; }
 .jauge span { background: var(--turquoise); }
 input:focus, select:focus, textarea:focus { outline: 2px solid rgba(54, 185, 154, .35); border-color: var(--turquoise); }
+a.tuile-geant, a.tuile-sous { color: #fff; text-decoration: none; }
+a.tuile-sous:hover { text-decoration: underline; }
+.tuile-pleine:is(a):hover { box-shadow: 0 0 0 2px var(--anthracite); }
+.mois:target h2 { color: var(--principal); }
+.mois { scroll-margin-top: 16px; }

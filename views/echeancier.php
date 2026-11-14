@@ -14,10 +14,10 @@ if ($retard['contrats']) {
 }
 foreach ($mois as $cle => $g) {
     [$a, $m] = explode('-', $cle);
-    $groupes[ucfirst($nomsMois[(int) $m]) . ' ' . $a] = $g;
+    $groupes[ucfirst($nomsMois[(int) $m]) . ' ' . $a] = $g + ['ancre' => 'm-' . $cle];
 }
 foreach ($groupes as $titreMois => $g): ?>
-<section class="mois <?= $g['contrats'] ? '' : 'mois-vide' ?>">
+<section class="mois <?= $g['contrats'] ? '' : 'mois-vide' ?>"<?= isset($g['ancre']) ? ' id="' . e($g['ancre']) . '"' : '' ?>>
   <h2><?= e($titreMois) ?>
     <span class="mois-total"><?= $g['nb_ouverts'] ? $g['nb_ouverts'] . ' à renouveler' . ($g['total'] > 0 ? ' · ' . e(montant_fr((string) $g['total'])) : '') : ($g['contrats'] ? 'tout est signé' : 'rien') ?></span></h2>
   <?php if ($g['total'] > 0): ?><div class="jauge"><span style="width: <?= (int) round(100 * $g['total'] / $maxMois) ?>%"></span></div><?php endif; ?>
