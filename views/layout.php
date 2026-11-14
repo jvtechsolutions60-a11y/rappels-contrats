@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($titre ?? '') ?> · <?= e($config['nom_appli'] ?? 'Rappels de contrats') ?></title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=<?= @filemtime(__DIR__ . '/../public/style.css') ?>">
 </head>
 <body>
 <?php if (empty($sansMenu)): ?>
@@ -29,6 +29,6 @@
 <?php if (empty($sansMenu)): ?>
 <footer><a href="<?= url('deconnexion') ?>">Se déconnecter</a></footer>
 <?php endif; ?>
-<script src="app.js"></script>
+<script src="app.js?v=<?= @filemtime(__DIR__ . '/../public/app.js') ?>"></script>
 </body>
 </html>
