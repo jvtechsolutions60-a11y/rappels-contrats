@@ -36,6 +36,16 @@ $libellesStatut = ['signe' => 'Signé', 'envoye' => 'Devis envoyé', 'a_envoyer'
     <?php if ($f['sans_montant']): ?><p class="note"><?= $f['sans_montant'] ?> contrat<?= $f['sans_montant'] > 1 ? 's' : '' ?> sans montant : ajoutez-le pour un total juste.</p><?php endif; ?>
   </div>
 
+  <div class="par-type">
+    <?php foreach ($f['types'] as $tid => $t): $nbc = count($t['clients']); ?>
+      <a class="type-compteur <?= $nbc ? '' : 'vide' ?>" href="<?= url('contrats', ['type' => $tid, 'statut' => 'tous']) ?>">
+        <span class="type-nb"><?= $nbc ?></span>
+        <span class="type-texte"><strong><?= e($t['nom']) ?></strong>
+          <small>client<?= $nbc > 1 ? 's' : '' ?><?= $t['nb'] > $nbc ? ' · ' . $t['nb'] . ' contrats' : '' ?><?= $t['montant'] > 0 ? ' · ' . $m($t['montant']) . '/an' : '' ?></small></span>
+      </a>
+    <?php endforeach; ?>
+  </div>
+
   <div class="chiffres">
     <a class="chiffre <?= $f['nb_a_securiser'] ? 'chiffre-attention' : '' ?>" href="<?= url('contrats', ['periode' => '30']) ?>">
       <span class="chiffre-valeur"><?= $m($f['a_securiser']) ?></span>
@@ -46,7 +56,7 @@ $libellesStatut = ['signe' => 'Signé', 'envoye' => 'Devis envoyé', 'a_envoyer'
       <span class="chiffre-libelle">en retard (<?= $f['nb_retard'] ?> contrat<?= $f['nb_retard'] > 1 ? 's' : '' ?>)</span>
     </a>
     <div class="chiffre chiffre-bilan">
-      <span><span class="chiffre-valeur positif">+<?= $m($f['renouvele']) ?></span> <span class="chiffre-libelle">renouvelés en <?= e($f['annee']) ?></span></span>
+      <span><span class="chiffre-valeur positif"><?= $f['renouvele'] > 0 ? '+' : '' ?><?= $m($f['renouvele']) ?></span> <span class="chiffre-libelle">renouvelés en <?= e($f['annee']) ?></span></span>
       <span><span class="chiffre-valeur negatif"><?= $f['perdu'] > 0 ? '−' : '' ?><?= $m($f['perdu']) ?></span> <span class="chiffre-libelle">perdus en <?= e($f['annee']) ?></span></span>
       <span class="chiffre-libelle">Taux de renouvellement sur 12 mois : <strong><?= $chiffres['taux'] === null ? '–' : $chiffres['taux'] . ' %' ?></strong></span>
     </div>

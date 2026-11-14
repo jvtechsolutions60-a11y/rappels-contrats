@@ -598,6 +598,10 @@ function finances(): array
         $f['mois'][date('Y-m', strtotime("$debut +$i months"))] = ['signe' => 0.0, 'envoye' => 0.0, 'a_envoyer' => 0.0, 'expire' => 0.0];
     }
     $dans90 = date('Y-m-d', strtotime('+90 days'));
+    $f['types'] = [];
+    foreach (db()->query('SELECT id, nom FROM types_contrat ORDER BY position, nom') as $t) {
+        $f['types'][$t['id']] = ['nom' => $t['nom'], 'clients' => [], 'nb' => 0, 'montant' => 0.0];
+    }
 
     foreach ($contrats as $c) {
         $annuel = montant_annuel($c);
@@ -607,6 +611,11 @@ function finances(): array
             $f['portefeuille'] += $annuel;
             $f['nb_portefeuille']++;
             $f['clients'][$c['client_nom']] = ($f['clients'][$c['client_nom']] ?? 0) + $annuel;
+            if (isset($f['types'][$c['type_id']])) {
+                $f['types'][$c['type_id']]['clients'][$c['client_id']] = true;
+                $f['types'][$c['type_id']]['nb']++;
+                $f['types'][$c['type_id']]['montant'] += $annuel;
+            }
             if ($c['montant'] === null) {
                 $f['sans_montant']++;
             }

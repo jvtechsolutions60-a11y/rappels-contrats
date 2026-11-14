@@ -200,3 +200,11 @@ a.chiffre:hover { border-color: var(--discret); }
 .top-montant small { color: var(--discret); }
 .top-clients .jauge { grid-column: 1 / -1; margin: 0; }
 @media (max-width: 600px) { .objectif-pct { text-align: left; } }
+.par-type { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.type-compteur { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #fff; border: 1px solid var(--bord, #e3e6ea); border-radius: 10px; text-decoration: none; color: var(--texte); }
+.type-compteur:hover { border-color: var(--principal); }
+.type-nb { font-size: 1.5rem; font-weight: 800; color: var(--principal); min-width: 1.4em; text-align: center; font-variant-numeric: tabular-nums; }
+.type-texte { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.type-texte small { color: var(--discret); font-size: .75rem; }
+.type-compteur.vide { opacity: .55; }
+.type-compteur.vide .type-nb { color: var(--discret); }
