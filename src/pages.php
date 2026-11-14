@@ -693,8 +693,9 @@ function page_import(): void
                 'date_fin'  => $l['date_fin'],
                 'statut'    => $l['statut'],
                 'montant'   => $l['montant'],
-                'note'      => null,
-            ], 'Importé depuis un fichier CSV');
+                'preavis_jours' => $l['preavis_jours'] ?? null,
+                'note'      => ($l['note'] ?? '') !== '' ? $l['note'] : null,
+            ], 'Importé depuis un fichier');
             $n++;
         }
         maj_expires();
@@ -733,9 +734,12 @@ function normaliser_entete(string $texte): string
 function analyser_lignes(array $tableau, array $types): array
 {
     $entetes = array_map(fn ($v) => normaliser_entete((string) $v), $tableau[0] ?? []);
-    $colonnes = ['client' => null, 'type' => null, 'produit' => null, 'date_fin' => null, 'statut' => null, 'montant' => null];
+    $colonnes = ['client' => null, 'type' => null, 'produit' => null, 'date_fin' => null, 'statut' => null, 'montant' => null,
+                 'note' => null, 'preavis' => null];
     $synonymes = ['date_de_fin' => 'date_fin', 'fin' => 'date_fin', 'echeance' => 'date_fin', 'date' => 'date_fin',
-                  'nom' => 'client', 'nom_du_client' => 'client', 'type_de_contrat' => 'type', 'montant_ht' => 'montant'];
+                  'nom' => 'client', 'nom_du_client' => 'client', 'type_de_contrat' => 'type', 'montant_ht' => 'montant',
+                  'notes' => 'note', 'remarque' => 'note', 'remarques' => 'note', 'commentaire' => 'note',
+                  'preavis_jours' => 'preavis', 'preavis_de_resiliation_jours' => 'preavis', 'preavis_de_resiliation' => 'preavis'];
     foreach ($entetes as $i => $entete) {
         if (str_starts_with($entete, 'montant')) {
             $entetes[$i] = 'montant'; // « Montant HT (€) »
@@ -790,6 +794,9 @@ function analyser_lignes(array $tableau, array $types): array
         }
         $l['date_fin'] = lire_date($l['date_fin_saisie']);
         $l['montant'] = lire_montant($val('montant'));
+        $l['note'] = $val('note');
+        $preavis = $val('preavis');
+        $l['preavis_jours'] = ctype_digit($preavis) && (int) $preavis <= 365 ? (int) $preavis : null;
         $statut = normaliser_entete($val('statut'));
         $l['statut'] = $statut === '' ? 'a_envoyer' : ($statutsParNom[$statut] ?? null);
 
